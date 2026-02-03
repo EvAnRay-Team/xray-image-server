@@ -10,7 +10,7 @@ export const defaultTemplate = createRenderTemplate("default")
         width: 1920,
         height: 1080
     })
-    .setElement((input) => (
+    .setElement(() => (
         <div
             style={{
                 height: "100%",
@@ -32,12 +32,5 @@ export const defaultTemplate = createRenderTemplate("default")
             >
                 <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
             </svg>
-            <div style={{ marginTop: 40, display: "flex" }}>
-                Hello, 这是一个测试界面！
-                <br />
-            </div>
-            <div style={{ marginTop: 40, display: "flex" }}>
-                你输入的文本是: {input.foo}
-            </div>
         </div>
     ))

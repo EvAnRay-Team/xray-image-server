@@ -68,6 +68,13 @@ export class RenderService {
     }
 
     /**
+     * 检查是否已注册指定名称的模板
+     */
+    hasTemplate(name: string): boolean {
+        return templateRegistry.has(name)
+    }
+
+    /**
      * 使用 Worker 线程池渲染图片
      */
     async render<T extends object>(
