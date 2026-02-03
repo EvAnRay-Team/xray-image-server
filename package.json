@@ -1,0 +1,23 @@
+{
+    "name": "xray-image-server",
+    "module": "index.ts",
+    "type": "module",
+    "private": false,
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.10",
+        "@types/pino": "^7.0.5",
+        "prettier": "^3.8.1"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@resvg/resvg-js": "^2.6.2",
+        "elysia": "^1.4.22",
+        "pino": "^10.3.0",
+        "react": "^19.2.4",
+        "satori": "^0.19.1",
+        "zod": "^4.3.6"
+    }
+}
