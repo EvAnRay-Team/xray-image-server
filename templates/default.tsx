@@ -1,10 +1,7 @@
 import z from "zod"
 import { createRenderTemplate } from "../core/render-template"
 
-const defaultInput = z.object({ foo: z.string() })
-
 export const defaultTemplate = createRenderTemplate("default")
-    .setInput(defaultInput)
     .addFont({ id: "font1", filename: "smileysans.ttf" })
     .setOption({
         width: 1920,

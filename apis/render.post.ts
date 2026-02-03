@@ -7,8 +7,8 @@ import { getRenderService } from "../core"
 import { server } from "typescript"
 
 const RequestSchema = z.object({
-    templateName: z.string(),
-    data: z.record(z.string(), z.unknown()),
+    id: z.string(),
+    payload: z.record(z.string(), z.unknown()),
     noCache: z.boolean().default(false)
 })
 
@@ -19,24 +19,18 @@ const renderCache = new LRUCache<string, Buffer>({
     ttl: 1000 * 60 * 5
 })
 
-function getCacheKey(templateName: string, data: any) {
-    // 计算 data 数据的 hash
-}
-
-export async function registerRenderGet(app: Elysia) {
-    app.get("/v1/render", async (ctx) => {
+export async function registerRenderPost(app: Elysia) {
+    app.post("/v1/render", async (ctx) => {
         // 验证请求参数
         try {
-            const { templateName, data, noCache } = RequestSchema.parse(
-                ctx.query
-            )
+            const { id, payload, noCache } = RequestSchema.parse(ctx.body)
             // 计算请求参数的 hash 生成缓存键
-            const cacheKey = templateName + "-" + xxh64(stringify(data))
+            const cacheKey = id + "-" + xxh64(stringify(payload))
 
             const service = getRenderService()
 
             // 检查当前的 templateName 是否已经注册
-            if (!service.hasTemplate(templateName)) {
+            if (!service.hasTemplate(id)) {
                 ctx.set.status = 404
                 return "Template not found"
             }
@@ -53,7 +47,10 @@ export async function registerRenderGet(app: Elysia) {
             }
 
             try {
-                const img = await service.render(templateName, data)
+                const img = await service.render(id, payload)
+                // 成功生成图片，置入缓存
+                renderCache.set(cacheKey, img)
+
                 ctx.set.status = 200
                 ctx.set.headers["content-type"] = "image/png"
                 ctx.set.headers["content-length"] = img.length
