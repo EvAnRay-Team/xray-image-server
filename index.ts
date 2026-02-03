@@ -1,9 +1,8 @@
-import { run } from "./core"
-import { defineConfig } from "./core/config"
+import { defineConfig, run } from "./core"
 
-const config = defineConfig({
-    host: "127.0.0.1",
-    port: 3000
-})
-
-await run(config)
+await run(
+    defineConfig({
+        host: "127.0.0.1",
+        port: 3000
+    })
+)

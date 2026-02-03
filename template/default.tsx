@@ -3,7 +3,7 @@ import { createRenderTemplate } from "../core/render"
 
 const defaultInput = z.object({ foo: z.string() })
 
-const defaultTemplate = createRenderTemplate("default")
+export const defaultTemplate = createRenderTemplate("default")
     .setInput(defaultInput)
     .setElement((input) => (
         <div
@@ -27,6 +27,8 @@ const defaultTemplate = createRenderTemplate("default")
             >
                 <path d="M37.59.25l36.95 64H.64l36.95-64z"></path>
             </svg>
-            <div style={{ marginTop: 40 }}>Hello, {input.foo}</div>
+            <div style={{ marginTop: 40, display: "flex" }}>
+                Hello, {input.foo}
+            </div>
         </div>
     ))
