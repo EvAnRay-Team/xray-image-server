@@ -10,14 +10,15 @@
         "prettier": "^3.8.1"
     },
     "peerDependencies": {
-        "typescript": "^5"
+        "typescript": "^5.9.3"
     },
     "dependencies": {
         "@resvg/resvg-js": "^2.6.2",
         "elysia": "^1.4.22",
-        "pino": "^10.3.0",
+        "prisma": "^7.3.0",
         "react": "^19.2.4",
         "satori": "^0.19.1",
+        "winston": "^3.19.0",
         "zod": "^4.3.6"
     }
 }
