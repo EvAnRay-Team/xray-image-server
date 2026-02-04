@@ -38,3 +38,9 @@ index.dev.ts
 
 .qoder/
 /generated/prisma
+
+index.ts
+
+server.config.dev.ts
+server.config.prod.ts
+server.config.test.ts

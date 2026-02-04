@@ -4,14 +4,19 @@
     "type": "module",
     "private": false,
     "scripts": {
-        "start": "bun run start.ts"
+        "start": "bun run ./scripts/start.ts",
+        "dev": "cross-env NODE_ENV=development bun run ./scripts/start.ts",
+        "start:dev": "cross-env NODE_ENV=development bun run ./scripts/start.ts",
+        "start:prod": "cross-env NODE_ENV=production bun run ./scripts/start.ts"
     },
     "devDependencies": {
         "@types/bun": "latest",
         "@types/node": "^25.2.0",
         "@types/pg": "^8.16.0",
         "@types/react": "^19.2.10",
-        "prettier": "^3.8.1"
+        "cross-env": "^10.1.0",
+        "prettier": "^3.8.1",
+        "vitest": "^4.0.18"
     },
     "peerDependencies": {
         "typescript": "^5.9.3"
