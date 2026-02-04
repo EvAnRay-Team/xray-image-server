@@ -12,6 +12,57 @@ import { registerRenderPost } from "../apis/render.post"
 import { getVersion } from "./utils"
 import { loggingMiddleware } from "../middlewares/logging.middleware"
 import getPort from "get-port"
+import { readdir } from "fs/promises"
+import { join, extname } from "path"
+import type { Logger } from "winston"
+
+/**
+ * 动态扫描并加载 templates 目录下的所有模板
+ * @returns 返回所有成功加载的模板数组
+ */
+export async function loadTemplatesFromDirectory(
+    logger: Logger
+): Promise<any[]> {
+    const templates: any[] = []
+    const templatesDir = join(process.cwd(), "templates")
+
+    try {
+        // 读取 templates 目录下的所有文件
+        const files = await readdir(templatesDir)
+
+        // 过滤出 .tsx 文件
+        const templateFiles = files.filter((file) => extname(file) === ".tsx")
+
+        // 动态导入每个模板文件
+        for (const file of templateFiles) {
+            const templateName = file.replace(".tsx", "")
+
+            try {
+                // 动态导入模板文件
+                const module = await import(join("../templates", file))
+
+                // 按照约定查找模板导出：${templateName}Template
+                const templateExportName = `${templateName}Template`
+                const template = module[templateExportName]
+
+                if (template) {
+                    logger.debug(`found template ${templateName}`)
+                    templates.push(template)
+                } else {
+                    logger.warn(
+                        `warning: template export "${templateExportName}" not found in ${file}`
+                    )
+                }
+            } catch (error) {
+                logger.error(`failed to load template from ${file}:`, error)
+            }
+        }
+    } catch (error) {
+        logger.error("failed to read templates directory:", error)
+    }
+
+    return templates
+}
 
 export async function run(config: Config) {
     // 创建 Logger
@@ -35,10 +86,10 @@ export async function run(config: Config) {
         )
         config.port = port
     }
-    // 注册模板
-    const templates = [defaultTemplate]
+    // 动态加载并注册模板
+    const templates = await loadTemplatesFromDirectory(logger)
     registerTemplates(...templates)
-    logger.info(`${templates.length} templates registered`)
+    logger.info(`${templates.length} templates registered)`)
 
     // 初始化渲染服务（Worker 线程池）
     await initializeRenderService(config.worker)
