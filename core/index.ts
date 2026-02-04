@@ -4,7 +4,8 @@ import { createLoggerWithConfig, setLogger } from "./logger"
 import {
     initializeRenderService,
     registerTemplates,
-    shutdownRenderService
+    shutdownRenderService,
+    getRenderService
 } from "./render-service"
 import { registerPingGet } from "../apis/ping.get"
 import { registerRenderPost } from "../apis/render.post"
@@ -91,7 +92,18 @@ export async function run(config: Config) {
     // 动态加载并注册模板
     const templates = await loadTemplatesFromDirectory(logger)
     registerTemplates(...templates)
-    logger.info(`${templates.length} templates registered`)
+    logger.info(`${templates.length} templates registered)`)
+    
+    // 打印已加载的模板列表
+    const registeredTemplates = getRenderService().getAllTemplates()
+    if (registeredTemplates.length > 0) {
+        logger.info("已加载的模板列表:")
+        registeredTemplates.forEach((template) => {
+            logger.info(`  - ${template.name}`)
+        })
+    } else {
+        logger.warn("未加载任何模板")
+    }
 
     // 初始化渲染服务（Worker 线程池）
     await initializeRenderService(config.worker)
