@@ -1,5 +1,4 @@
 import Elysia from "elysia"
-import { defaultTemplate } from "../templates/default"
 import { type Config } from "./config"
 import { createLoggerWithConfig, setLogger } from "./logger"
 import {
@@ -15,6 +14,7 @@ import getPort from "get-port"
 import { readdir } from "fs/promises"
 import { join, extname } from "path"
 import type { Logger } from "winston"
+import { AssetsManager } from "./asset"
 
 /**
  * 动态扫描并加载 templates 目录下的所有模板
@@ -73,6 +73,8 @@ export async function run(config: Config) {
     logger.debug("debug mode: " + config.debug)
     logger.debug("config: " + JSON.stringify(config, null, 0))
 
+    // 初始化资源管理器
+
     // 覆写环境变量中的数据库URL
     if (config.db?.url) {
         process.env.DATABASE_URL = config.db.url
@@ -89,7 +91,7 @@ export async function run(config: Config) {
     // 动态加载并注册模板
     const templates = await loadTemplatesFromDirectory(logger)
     registerTemplates(...templates)
-    logger.info(`${templates.length} templates registered)`)
+    logger.info(`${templates.length} templates registered`)
 
     // 初始化渲染服务（Worker 线程池）
     await initializeRenderService(config.worker)
@@ -159,6 +161,22 @@ export async function run(config: Config) {
     // 注册信号处理器
     process.on("SIGINT", () => shutdownHandler("SIGINT"))
     process.on("SIGTERM", () => shutdownHandler("SIGTERM"))
+
+    // 添加额外的退出事件监听作为后备
+    process.on("beforeExit", async (code) => {
+        if (!isShuttingDown) {
+            logger.info(
+                `Process beforeExit with code ${code}, performing cleanup...`
+            )
+            await shutdownHandler("beforeExit")
+        }
+    })
+
+    process.on("exit", (code) => {
+        if (!isShuttingDown) {
+            logger.info(`Process exit with code ${code}`)
+        }
+    })
 
     // 处理未捕获的异常
     process.on("uncaughtException", (error) => {

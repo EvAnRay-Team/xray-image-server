@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -11,4 +5,110 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model abstracts {
+  id          Int      @id(map: "pk_abstracts") @default(autoincrement())
+  music_id    Int
+  user_id     String   @db.VarChar
+  nickname    String   @db.VarChar
+  file_key    String   @db.VarChar
+  create_time DateTime @db.Timestamp(6)
+  update_time DateTime @db.Timestamp(6)
+}
+
+model alembic_version {
+  version_num String @id(map: "alembic_version_pkc") @db.VarChar(32)
+}
+
+model alias_applies {
+  id          Int         @id(map: "pk_alias_applies") @default(autoincrement())
+  music_id    Int
+  alias       String      @db.VarChar
+  user_id     Int
+  group_id    Int
+  status      aliasstatus
+  create_time DateTime    @db.Timestamp(6)
+  update_time DateTime    @db.Timestamp(6)
+}
+
+model alias_votes {
+  id          Int      @id(map: "pk_alias_votes") @default(autoincrement())
+  user_id     Int
+  group_id    Int
+  score       Int
+  create_time DateTime @db.Timestamp(6)
+}
+
+model aliases {
+  id          Int      @id(map: "pk_aliases") @default(autoincrement())
+  music_id    Int
+  alias       String   @db.VarChar
+  title       String   @db.VarChar
+  status      Int
+  create_time DateTime @db.Timestamp(6)
+  update_time DateTime @db.Timestamp(6)
+}
+
+model bind_tokens {
+  id                                    String   @id(map: "pk_bind_tokens") @db.Uuid
+  token                                 String   @unique @db.VarChar
+  main_user_id                          String   @db.Uuid
+  type                                  bindtype
+  created_at                            DateTime @db.Timestamp(6)
+  expires_at                            DateTime @db.Timestamp(6)
+  sub_user_id                           String?  @db.Uuid
+  users_bind_tokens_main_user_idTousers users    @relation("bind_tokens_main_user_idTousers", fields: [main_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_bind_tokens_main_user_id_users")
+  users_bind_tokens_sub_user_idTousers  users?   @relation("bind_tokens_sub_user_idTousers", fields: [sub_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_bind_tokens_sub_user_id_users")
+}
+
+model user_auths {
+  id          String  @id(map: "pk_user_auths") @db.Uuid
+  user_id     String  @db.Uuid
+  external_id String? @unique @db.VarChar
+  type        String  @db.VarChar
+  ext         Json?
+  users       users   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_auths_user_id_users")
+}
+
+model user_configs {
+  id                   Int      @id(map: "pk_user_configs") @default(autoincrement())
+  user_id              Int
+  is_abstract          Boolean
+  maimai_best_50_style String   @db.VarChar
+  maimai_icon          String?  @db.VarChar
+  maimai_plate         String?  @db.VarChar
+  maimai_frame         String?  @db.VarChar
+  chu_prober_mode      String   @db.VarChar
+  create_group         Int?
+  create_time          DateTime @db.Timestamp(6)
+}
+
+model user_test_configs {
+  reply_uuid Boolean
+  id         String  @id(map: "pk_user_test_configs") @db.Uuid
+  user_id    String  @db.Uuid
+  users      users   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_test_configs_user_id_users")
+}
+
+model users {
+  id                                          String              @id(map: "pk_users") @db.Uuid
+  create_time                                 DateTime            @db.Timestamp(6)
+  bind_tokens_bind_tokens_main_user_idTousers bind_tokens[]       @relation("bind_tokens_main_user_idTousers")
+  bind_tokens_bind_tokens_sub_user_idTousers  bind_tokens[]       @relation("bind_tokens_sub_user_idTousers")
+  user_auths                                  user_auths[]
+  user_test_configs                           user_test_configs[]
+}
+
+enum aliasstatus {
+  SCORING
+  TIMEOUT
+  PASSED
+  ADMIN_PASSED
+  ADMIN_REJECTED
+}
+
+enum bindtype {
+  REQUEST
+  CONFIRM
 }
