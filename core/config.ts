@@ -2,11 +2,10 @@ import type { WorkerPoolConfig } from "./worker-types"
 
 export type Config = {
     debug?: boolean
-    host?: string
     port?: number
     enableOnlineAssets?: boolean
     worker?: WorkerPoolConfig
-    db?: { pgUrl: string }
+    db?: { url: string }
     oss?: {
         secretId: string
         secretKey: string
@@ -36,7 +35,6 @@ export type Config = {
 
 export const defaultConfig: Config = {
     debug: false,
-    host: "127.0.0.1",
     port: 3000,
     enableOnlineAssets: false,
     worker: {
@@ -47,7 +45,7 @@ export const defaultConfig: Config = {
         verbose: false
     },
     db: {
-        pgUrl: "postgres://username:password@localhost:5432/database"
+        url: "postgres://username:password@localhost:5432/database"
     },
     oss: {
         secretId: "your-secret-id",

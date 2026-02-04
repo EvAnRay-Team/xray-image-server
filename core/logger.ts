@@ -2,7 +2,6 @@ import chalk from "chalk"
 import winston from "winston"
 import DailyRotateFile from "winston-daily-rotate-file"
 import { mkdirSync } from "fs"
-import { resolve } from "path"
 
 const { combine, timestamp, printf, errors, splat, metadata } = winston.format
 

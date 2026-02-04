@@ -2,7 +2,7 @@ import { Resvg, type ResvgRenderOptions } from "@resvg/resvg-js"
 import type { ReactNode } from "react"
 import satori, { type SatoriOptions } from "satori"
 import z from "zod"
-import { getFont } from "./asset"
+import { getLocalFont } from "./asset"
 import { fa } from "zod/locales"
 
 export type RenderOptions = {
@@ -73,7 +73,7 @@ export class RenderTemplate<Input extends object = {}> {
         for (const font of this.fonts) {
             fontOptions.push({
                 name: font.id,
-                data: await getFont(font.filename),
+                data: await getLocalFont(font.filename),
                 weight: font.weight ?? 400,
                 style: font.style ?? "normal",
                 lang: font.lang

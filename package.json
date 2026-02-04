@@ -3,10 +3,14 @@
     "module": "index.ts",
     "type": "module",
     "private": false,
+    "scripts": {
+        "start": "bun run start.ts"
+    },
     "devDependencies": {
         "@types/bun": "latest",
+        "@types/node": "^25.2.0",
+        "@types/pg": "^8.16.0",
         "@types/react": "^19.2.10",
-        "@types/pino": "^7.0.5",
         "prettier": "^3.8.1"
     },
     "peerDependencies": {
@@ -14,11 +18,16 @@
     },
     "dependencies": {
         "@node-rs/xxhash": "^1.7.6",
+        "@prisma/adapter-pg": "^7.3.0",
+        "@prisma/client": "^7.3.0",
         "@resvg/resvg-js": "^2.6.2",
         "chalk": "^5.6.2",
+        "dotenv": "^17.2.3",
         "elysia": "^1.4.22",
         "fast-json-stable-stringify": "^2.1.0",
+        "get-port": "^7.1.0",
         "lru-cache": "^11.2.5",
+        "pg": "^8.18.0",
         "prisma": "^7.3.0",
         "react": "^19.2.4",
         "satori": "^0.19.1",

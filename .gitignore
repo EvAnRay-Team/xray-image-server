@@ -37,3 +37,4 @@ index.prod.ts
 index.dev.ts
 
 .qoder/
+/generated/prisma

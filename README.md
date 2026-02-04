@@ -32,18 +32,30 @@ bun install
 
 运行以上命令将克隆该项目并安装所需的依赖。
 
-`xray-image-server` 的配置使用 index.ts 脚本来进行，配置项参考如下：
+`xray-image-server` 的配置使用 server.config.ts 来进行，配置项参考如下：
 
 ```typescript
-import { defineConfig, run } from "./core"
+import { defineConfig } from "./core/config"
 
-await run(
-    defineConfig({
-        host: "127.0.0.1",
-        port: 3000
-        // 还没写这部分的介绍喵
-    })
-)
+export default defineConfig({
+    debug: true,
+    port: 3000,
+    db: {
+        url:
+            process.env.DATABASE_URL ||
+            "postgres://username:password@localhost:5432/database"
+    },
+    logger: {
+        enableFileTransport: true,
+        logDir: "./logs",
+        filename: "log-%DATE%.jsonl",
+        datePattern: "YYYY-MM-DD",
+        maxFiles: "7d",
+        maxSize: "100m"
+    }
+})
+
+在目录下使用 `bun run start` 即可启动服务。
 ```
 
 ## 静态资源
@@ -92,6 +104,10 @@ await run(
 
 ## 开发进度
 
-下一步是完善日志记录，现在这个样子只能说是勉强能跑。
+- ~~下一步是完善日志记录，现在这个样子只能说是勉强能跑。~~
 
-可以的话可以尝试优化一下主线程和worker现场通信过程的延迟，目前来看这个延迟有些太大了，有很大的提升空间。
+- 日志部分基本完善到可用了，后续使用过程中继续观察哪些地方还有打日志出来的必要性。
+
+- 可以的话可以尝试优化一下主线程和worker现场通信过程的延迟，目前来看这个延迟有些太大了，有很大的提升空间。
+
+- 然后要写一下远程资源的部分。

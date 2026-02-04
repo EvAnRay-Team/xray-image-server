@@ -10,6 +10,8 @@ import {
 import { registerPingGet } from "../apis/ping.get"
 import { registerRenderPost } from "../apis/render.post"
 import { getVersion } from "./utils"
+import { loggingMiddleware } from "../middlewares/logging.middleware"
+import getPort from "get-port"
 
 export async function run(config: Config) {
     // 创建 Logger
@@ -20,6 +22,19 @@ export async function run(config: Config) {
     logger.debug("debug mode: " + config.debug)
     logger.debug("config: " + JSON.stringify(config, null, 0))
 
+    // 覆写环境变量中的数据库URL
+    if (config.db?.url) {
+        process.env.DATABASE_URL = config.db.url
+    }
+
+    // 检测端口的可用性
+    const port = await getPort({ port: config.port })
+    if (port !== config.port) {
+        logger.warn(
+            `port ${config.port} is already in use, using ${port} instead`
+        )
+        config.port = port
+    }
     // 注册模板
     const templates = [defaultTemplate]
     registerTemplates(...templates)
@@ -31,6 +46,9 @@ export async function run(config: Config) {
 
     // 初始化服务端
     const app = new Elysia()
+
+    // 添加日志中间件
+    app.use(loggingMiddleware())
 
     // 注册各个端点
     registerPingGet(app)

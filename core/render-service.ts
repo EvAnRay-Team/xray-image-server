@@ -6,6 +6,8 @@ import {
     initializeGlobalWorkerPool,
     shutdownGlobalWorkerPool
 } from "./worker-pool"
+import type { Logger } from "winston"
+import { getLogger } from "./logger"
 
 /**
  * 模板注册表
@@ -28,6 +30,8 @@ export class RenderService {
     private initialized = false
     private config: RenderServiceConfig
 
+    private logger?: Logger
+
     constructor(config: RenderServiceConfig = {}) {
         this.config = { autoInitialize: true, ...config }
     }
@@ -39,6 +43,8 @@ export class RenderService {
         if (this.initialized) {
             return
         }
+
+        this.logger = getLogger()
 
         this.pool = await initializeGlobalWorkerPool(this.config)
         this.initialized = true
@@ -75,12 +81,23 @@ export class RenderService {
     }
 
     /**
+     * 获取所有已注册的模板
+     */
+    getAllTemplates(): RenderTemplate<any>[] {
+        return Array.from(templateRegistry.values())
+    }
+
+    /**
      * 使用 Worker 线程池渲染图片
      */
     async render<T extends object>(
         templateName: string,
         input: T
     ): Promise<Buffer> {
+        this.logger?.debug(
+            `received render request for template ${templateName}`
+        )
+
         // 自动初始化
         if (!this.initialized && this.config.autoInitialize) {
             await this.initialize()
@@ -108,10 +125,15 @@ export class RenderService {
         }
 
         // 使用 Worker 线程池渲染
-        return await this.pool.render(
+        const startTime = Date.now()
+        const res = await this.pool.render(
             templateName,
             input as Record<string, any>
         )
+        this.logger?.info(
+            `rendered template ${templateName} in ${Date.now() - startTime}ms`
+        )
+        return res
     }
 
     /**

@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto"
 import type {
     RenderTask,
     WorkerInstance,
@@ -8,6 +7,9 @@ import type {
     PoolStats
 } from "./worker-types"
 import { WorkerStatus } from "./worker-types"
+import { getLogger } from "./logger"
+import type { Logger } from "winston"
+import { snowflake } from "./utils"
 
 /**
  * 默认配置
@@ -30,6 +32,8 @@ export class WorkerPool {
     private activeTasks: Map<string, RenderTask> = new Map()
     private taskTimeouts: Map<string, Timer> = new Map()
 
+    private logger?: Logger
+
     // 统计信息
     private stats = {
         completedTasks: 0,
@@ -39,17 +43,16 @@ export class WorkerPool {
 
     constructor(config: WorkerPoolConfig = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config }
-        this.log(
-            `Initializing worker pool with ${this.config.workerCount} workers`
-        )
     }
 
     /**
      * 初始化线程池
      */
     async initialize(): Promise<void> {
-        this.log(
-            `Initializing worker pool with ${this.config.workerCount} workers`
+        this.logger = getLogger()
+
+        this.logger.info(
+            `initializing worker pool with ${this.config.workerCount} workers`
         )
 
         const initPromises = []
@@ -59,8 +62,8 @@ export class WorkerPool {
         }
 
         await Promise.all(initPromises)
-        this.log(
-            `✓ Worker pool initialized successfully with ${this.workers.size} workers ready`
+        this.logger.info(
+            `worker pool initialized successfully with ${this.workers.size} workers ready`
         )
     }
 
@@ -68,7 +71,7 @@ export class WorkerPool {
      * 创建新的 Worker 实例
      */
     private async createWorker(): Promise<WorkerInstance> {
-        const workerId = randomUUID()
+        const workerId = crypto.randomUUID()
 
         return new Promise((resolve, reject) => {
             try {
@@ -110,7 +113,7 @@ export class WorkerPool {
                             this.handleWorkerMessage(workerInstance, e.data)
                         }
                         this.workers.set(workerId, workerInstance)
-                        this.log(`Worker ${workerId} is ready`)
+                        this.logger?.debug(`worker ${workerId} is ready`)
                         resolve(workerInstance)
                     }
                 }
@@ -145,8 +148,8 @@ export class WorkerPool {
             case "success": {
                 const task = this.activeTasks.get(message.taskId)
                 if (!task) {
-                    this.log(
-                        `Received success for unknown task: ${message.taskId}`
+                    this.logger?.warn(
+                        `received success for unknown task: ${message.taskId}`
                     )
                     return
                 }
@@ -167,8 +170,8 @@ export class WorkerPool {
                 this.activeTasks.delete(message.taskId)
                 this.finishWorkerTask(workerInstance)
 
-                this.log(
-                    `Task ${message.taskId} completed in ${message.duration}ms by worker ${workerInstance.id}`
+                this.logger?.debug(
+                    `task ${message.taskId} completed in ${message.duration}ms by worker ${workerInstance.id}`
                 )
                 break
             }
@@ -176,8 +179,8 @@ export class WorkerPool {
             case "error": {
                 const task = this.activeTasks.get(message.taskId)
                 if (!task) {
-                    this.log(
-                        `Received error for unknown task: ${message.taskId}`
+                    this.logger?.warn(
+                        `received error for unknown task: ${message.taskId}`
                     )
                     return
                 }
@@ -196,14 +199,14 @@ export class WorkerPool {
                 this.activeTasks.delete(message.taskId)
                 this.finishWorkerTask(workerInstance)
 
-                this.log(
-                    `Task ${message.taskId} failed in worker ${workerInstance.id}: ${message.error}`
+                this.logger?.warn(
+                    `task ${message.taskId} failed in worker ${workerInstance.id}: ${message.error}`
                 )
 
                 // 检查是否需要重启 Worker
                 if (workerInstance.errorsCount >= this.config.maxWorkerErrors) {
-                    this.log(
-                        `Worker ${workerInstance.id} exceeded error limit, restarting...`
+                    this.logger?.warn(
+                        `worker ${workerInstance.id} exceeded error limit, restarting...`
                     )
                     this.restartWorker(workerInstance)
                 }
@@ -223,8 +226,8 @@ export class WorkerPool {
         workerInstance: WorkerInstance,
         error: ErrorEvent
     ): void {
-        this.log(
-            `Worker ${workerInstance.id} encountered error: ${error.message}`
+        this.logger?.warn(
+            `worker ${workerInstance.id} encountered error: ${error.message}`
         )
 
         workerInstance.errorsCount++
@@ -261,7 +264,7 @@ export class WorkerPool {
      * 重启 Worker
      */
     private async restartWorker(workerInstance: WorkerInstance): Promise<void> {
-        this.log(`Restarting worker ${workerInstance.id}`)
+        this.logger?.debug(`restarting worker ${workerInstance.id}`)
 
         // 终止旧 Worker
         workerInstance.worker.terminate()
@@ -273,8 +276,8 @@ export class WorkerPool {
             await this.createWorker()
             this.scheduleNextTask()
         } catch (error) {
-            this.log(
-                `Failed to restart worker: ${error instanceof Error ? error.message : String(error)}`
+            this.logger?.error(
+                `failed to restart worker: ${error instanceof Error ? error.message : String(error)}`
             )
         }
     }
@@ -344,7 +347,9 @@ export class WorkerPool {
 
         workerInstance.worker.postMessage(message)
 
-        this.log(`Assigned task ${task.taskId} to worker ${workerInstance.id}`)
+        this.logger?.debug(
+            `assigned task ${task.taskId} to worker ${workerInstance.id}`
+        )
     }
 
     /**
@@ -356,7 +361,7 @@ export class WorkerPool {
             return
         }
 
-        this.log(`Task ${taskId} timed out`)
+        this.logger?.warn(`task ${taskId} timed out`)
 
         task.reject(
             new Error(`Task timeout after ${this.config.taskTimeout}ms`)
@@ -394,13 +399,13 @@ export class WorkerPool {
         return new Promise((resolve, reject) => {
             // 检查队列是否已满
             if (this.taskQueue.length >= this.config.maxQueueSize) {
-                reject(new Error("Task queue is full"))
+                reject(new Error("Task queue is full, reject task"))
                 return
             }
 
             // 创建任务
             const task: RenderTask = {
-                taskId: randomUUID(),
+                taskId: snowflake.nextBase36Id(),
                 templateName,
                 input,
                 resolve,
@@ -417,8 +422,8 @@ export class WorkerPool {
             } else {
                 // 加入队列等待
                 this.taskQueue.push(task)
-                this.log(
-                    `Task ${task.taskId} queued (queue size: ${this.taskQueue.length})`
+                this.logger?.info(
+                    `task ${task.taskId} queued (queue size: ${this.taskQueue.length})`
                 )
             }
         })
@@ -457,7 +462,7 @@ export class WorkerPool {
      * 关闭线程池
      */
     async shutdown(): Promise<void> {
-        this.log("Shutting down worker pool...")
+        this.logger?.info("shutting down worker pool...")
 
         // 拒绝所有排队的任务
         for (const task of this.taskQueue) {
@@ -484,16 +489,7 @@ export class WorkerPool {
         }
         this.workers.clear()
 
-        this.log("Worker pool shut down")
-    }
-
-    /**
-     * 日志输出
-     */
-    private log(message: string): void {
-        if (this.config.verbose) {
-            console.log(`[WorkerPool] ${message}`)
-        }
+        this.logger?.info("worker pool shut down complete")
     }
 }
 

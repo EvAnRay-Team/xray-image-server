@@ -1,3 +1,4 @@
+import type { RenderTemplate } from "./render-template"
 import type {
     WorkerRequestMessage,
     WorkerResponseMessage
@@ -52,7 +53,7 @@ async function handleRenderTask(message: WorkerRequestMessage) {
         const template = await loadTemplate(message.templateName)
 
         // 执行渲染
-        const buffer = await template.render(message.input)
+        const buffer = await template.render(message.input, true)
 
         // 将 Buffer 转换为 ArrayBuffer 以便在线程间传递
         const arrayBuffer = buffer.buffer.slice(
