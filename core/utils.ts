@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react"
+
 interface PackageJson {
     name: string
     version?: string
@@ -56,3 +58,76 @@ export class SnowFlake {
 }
 
 export const snowflake = new SnowFlake(1)
+
+/**
+ * CSS 样式工具函数
+ */
+
+/**
+ * 重置 margin 和 padding 的样式对象
+ * 用于清除元素的默认边距和内边距
+ */
+export const resetMarginPadding: CSSProperties = {
+    margin: 0,
+    padding: 0
+}
+
+/**
+ * 创建绝对定位样式对象
+ * 使用方法：
+ *  - 两个参数：absoluteStyle(left, top, [additionalStyles])
+ *  - 四个参数：absoluteStyle(width, height, left, top, [additionalStyles])
+ * @returns React CSS 样式对象
+ */
+export function absoluteStyle(
+    a: number | string,
+    b: number | string,
+    c?: number | string | CSSProperties,
+    d?: number | string | CSSProperties,
+    e?: CSSProperties
+): CSSProperties {
+    // 只有两个参数：left 和 top
+    if (typeof c === "undefined" && typeof d === "undefined") {
+        return {
+            position: "absolute",
+            left: typeof a === "number" ? `${a}px` : a,
+            top: typeof b === "number" ? `${b}px` : b
+        }
+    }
+    // 三个参数：left, top, additionalStyles
+    if (typeof d === "undefined" && typeof c !== "undefined" && (typeof c === "object" && c !== null)) {
+        return {
+            position: "absolute",
+            left: typeof a === "number" ? `${a}px` : a,
+            top: typeof b === "number" ? `${b}px` : b,
+            ...c
+        }
+    }
+    // 四个或五个参数：width, height, left, top, (additionalStyles)
+    let width = a
+    let height = b
+    let left = c as number | string
+    let top = d as number | string
+    let additionalStyles = e as CSSProperties | undefined
+
+    // 处理四个参数：没有additionalStyles
+    if (typeof e === "undefined") {
+        return {
+            position: "absolute",
+            width: typeof width === "number" ? `${width}px` : width,
+            height: typeof height === "number" ? `${height}px` : height,
+            left: typeof left === "number" ? `${left}px` : left,
+            top: typeof top === "number" ? `${top}px` : top
+        }
+    }
+
+    // 五个参数
+    return {
+        position: "absolute",
+        width: typeof width === "number" ? `${width}px` : width,
+        height: typeof height === "number" ? `${height}px` : height,
+        left: typeof left === "number" ? `${left}px` : left,
+        top: typeof top === "number" ? `${top}px` : top,
+        ...additionalStyles
+    }
+}

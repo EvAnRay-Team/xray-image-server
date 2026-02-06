@@ -26,7 +26,6 @@ export class AssetsManager {
      * 获取本地图片并转换为 base64 data URL
      * @param filename 图片文件名，会依次尝试以下路径：
      *   1. ./assets/static/image/${filename}
-     *   2. ./assets/${filename}
      * @returns base64 data URL 字符串，可直接用于 satori 的 <img src> 属性
      */
     public static async getLocalImage(filename: string): Promise<string> {
