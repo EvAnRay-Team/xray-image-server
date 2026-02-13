@@ -26,7 +26,7 @@ export type FontInfo = {
 
 export class RenderTemplate<Input extends object = {}> {
     inputSchema?: z.ZodObject<any>
-    elementFn?: (input: Input) => ReactNode
+    elementFn?: (input: Input) => ReactNode | Promise<ReactNode>
     option: RenderOptions = defaultOption
     fonts: FontInfo[] = []
 
@@ -39,7 +39,7 @@ export class RenderTemplate<Input extends object = {}> {
         return this as any
     }
 
-    setElement(element: (input: Input) => ReactNode) {
+    setElement(element: (input: Input) => ReactNode | Promise<ReactNode>) {
         this.elementFn = element
         return this
     }
@@ -89,8 +89,9 @@ export class RenderTemplate<Input extends object = {}> {
             background: this.option.bg
         }
 
-        // 生成 React Like 元素
-        const ele = this.elementFn(input ?? ({} as any))
+        // 生成 React Like 元素（支持异步函数）
+        const eleResult = this.elementFn(input ?? ({} as any))
+        const ele = eleResult instanceof Promise ? await eleResult : eleResult
         // 渲染 svg
         const svg = await satori(ele, satoriOption)
         // 渲染图像
