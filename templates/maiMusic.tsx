@@ -16,12 +16,14 @@ export const maiMusicTemplate = createRenderTemplate("maiMusic")
     .setInput(z.object({
         // music_list 接受任何类型的数组，忽略元素类型验证
         basic_info: z.object(),
-        charts: z.object(),
+        charts: z.array(z.object()),
         records: z.array(z.object()),
     }))
     .setElement(async (input) => {
         // 使用顶层 await 预加载图片（Bun 支持顶层 await）
-        const musicCoverImg = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${input.basic_info.id}.png`)
+        // const musicCoverImg = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${input.basic_info.id}.png`)
+        const coverCoverkey = "maimaidx/abstract_cover/38/af/38afc75749d1207ffc8df8b243ffb761.png"
+        const musicCoverImg = await AssetsManager.getRemoteImage(coverCoverkey)
         const musicInfoBackgroundImg = await AssetsManager.getLocalImage("maimaidx/music_info/bg_circle.png")
 
         return (

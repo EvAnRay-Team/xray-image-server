@@ -3,6 +3,9 @@ import type {
     WorkerRequestMessage,
     WorkerResponseMessage
 } from "./worker-types"
+import { AssetsManager } from "./asset"
+import type { Config } from "./config"
+import { loadConfig } from "../scripts/config-loader"
 
 /* 
 Worker 脚本定义
@@ -13,6 +16,26 @@ declare const self: Worker
 
 // 存储已加载的模板实例
 const templateRegistry = new Map<string, any>()
+
+// 初始化 AssetsManager（如果配置存在）
+async function initializeAssetsManager() {
+    try {
+        let config: Config | null = await loadConfig()
+        // 如果找到了配置且启用了在线资源，则初始化
+        if (config && config.enableOnlineAssets && config.oss) {
+            await AssetsManager.initialize(config)
+            console.log("[Worker] AssetsManager initialized successfully")
+        } else {
+            console.log(`[Worker] AssetsManager not initialized: enableOnlineAssets=${config?.enableOnlineAssets}, hasOSS=${!!config?.oss}`)
+        }
+    } catch (error) {
+        // 初始化失败，但不影响 Worker 运行
+        console.warn("[Worker] Failed to initialize AssetsManager:", error)
+    }
+}
+
+// 在 Worker 启动时初始化
+initializeAssetsManager()
 
 /**
  * 动态加载模板
