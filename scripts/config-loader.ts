@@ -19,6 +19,8 @@ async function loadConfig(): Promise<Config> {
                 configModule = await import("../server.config.test")
                 break
             case "development":
+                configModule = await import("../server.config.dev")
+                break
             case "dev":
             default:
                 configModule = await import("../server.config.dev")

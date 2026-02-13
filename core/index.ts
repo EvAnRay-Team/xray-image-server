@@ -72,7 +72,7 @@ export async function run(config: Config) {
 
     logger.info(`starting xray-image-server ${await getVersion()}...`)
     logger.debug("debug mode: " + config.debug)
-    logger.debug("config: " + JSON.stringify(config, null, 0))
+    // logger.debug("config: " + JSON.stringify(config, null, 0))
 
     // 初始化资源管理器
 
@@ -104,6 +104,12 @@ export async function run(config: Config) {
     } else {
         logger.warn("未加载任何模板")
     }
+
+
+    // if (config.enableOnlineAssets) {
+    //     await AssetsManager.initialize(config)
+    //     logger.info("assets manager initialized")
+    // }
 
     // 初始化渲染服务（Worker 线程池）
     await initializeRenderService(config.worker)
