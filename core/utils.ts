@@ -122,12 +122,25 @@ export function absoluteStyle(
     }
 
     // 五个参数
+    // 五个参数
+    // ...
     return {
+        // ...
         position: "absolute",
-        width: typeof width === "number" ? `${width}px` : width,
-        height: typeof height === "number" ? `${height}px` : height,
         left: typeof left === "number" ? `${left}px` : left,
         top: typeof top === "number" ? `${top}px` : top,
-        ...additionalStyles
+        width: typeof width === "number" ? `${width}px` : width,
+        height: typeof height === "number" ? `${height}px` : height,
+        ...e 
     }
+}
+
+/**
+ * 格式化 MaiMai 资源文件名
+ * 规则：转换为小写，并将 '+' 替换为 'p'
+ * 例如：'SS+' -> 'ssp', 'FC+' -> 'fcp'
+ */
+export function formatMaiResourceName(name: string): string {
+    if (!name) return ""
+    return name.toLowerCase().replaceAll("+", "p")
 }
