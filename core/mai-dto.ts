@@ -41,7 +41,8 @@ export const MaiMusicRecordSchema = z.object({
         combo_status: z.string().nullable(),
         sync_status: z.string().nullable(),
         rate: z.string().nullable()
-    }))
+    })),
+    is_abstract: z.boolean().default(true)
 })
 
 export type MaiMusicRecordInput = z.infer<typeof MaiMusicRecordSchema>

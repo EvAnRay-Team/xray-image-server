@@ -4,7 +4,7 @@ import { type Config } from "../core/config"
 async function loadConfig(): Promise<Config> {
     const env = process.env.NODE_ENV || "development"
 
-    console.log(`Loading configuration for environment: ${env}`)
+    // console.log(`Loading configuration for environment: ${env}`)
 
     try {
         let configModule: { default: Config }

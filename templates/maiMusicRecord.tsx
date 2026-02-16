@@ -4,6 +4,7 @@ import { AssetsManager } from "../core/asset"
 import { absoluteStyle, formatMaiResourceName } from "../core/utils"
 import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
 import { MaiMusicRecordSchema } from "../core/mai-dto"
+// import { logger } from "../core/logger"
 
 import { VERSION_LOGO_MAP, SPECIAL_MUSIC_BG_MAP, MUSIC_TYPE_ICON_MAP } from "../core/mai-constants"
 
@@ -18,24 +19,23 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
     })
     .setInput(MaiMusicRecordSchema)
     .setElement(async (input) => {
-        const { basic_info, charts, records } = input
+        const { basic_info, charts, records, is_abstract} = input
 
         // 1. 准备背景
         const musicId = Number(basic_info.id)
         
         // 判断是否为特殊背景
-        let bgPath = "maimaidx/music_info/background/bg_circle.png"
-        if (SPECIAL_MUSIC_BG_MAP[musicId]) {
-            bgPath = `maimaidx/music_info/background_special/${SPECIAL_MUSIC_BG_MAP[musicId]}`
-        }
+        const bgPath = SPECIAL_MUSIC_BG_MAP[musicId]
+            ? `maimaidx/music_record/background_special/${SPECIAL_MUSIC_BG_MAP[musicId]}`
+            : "maimaidx/music_record/background/bg_circle.png";
 
         // 2. 预加载基础资源
         const [bgImg, coverImg, typeIconImg, mask1Img, mask2Img] = await Promise.all([
             AssetsManager.getLocalImage(bgPath),
-            AssetsManager.getLocalImage(`maimaidx/normal_cover/${basic_info.id}.png`),
-            AssetsManager.getLocalImage(`maimaidx/music_info/类型/${basic_info.type}.png`),
-            AssetsManager.getLocalImage(`maimaidx/music_info/mask/mask_1.png`),
-            AssetsManager.getLocalImage(`maimaidx/music_info/mask/mask_2.png`)
+            AssetsManager.getMusicCover(musicId, is_abstract),
+            AssetsManager.getLocalImage(`maimaidx/music_record/类型/${basic_info.type}.png`),
+            AssetsManager.getLocalImage(`maimaidx/music_record/mask/mask_1.png`),
+            AssetsManager.getLocalImage(`maimaidx/music_record/mask/mask_2.png`)
         ])
 
         // 3. 准备版本图标
@@ -43,7 +43,7 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
         if (VERSION_LOGO_MAP[basic_info.version.cn_ver]) {
             try {
                 const verCode = VERSION_LOGO_MAP[basic_info.version.cn_ver]
-                versionLogoImg = await AssetsManager.getLocalImage(`maimaidx/music_info/版本牌/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
+                versionLogoImg = await AssetsManager.getLocalImage(`maimaidx/music_record/版本牌/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
             } catch (e) {
                 console.error("Failed to load version logo", e)
             }
@@ -73,13 +73,13 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
 
             // 加载图标
             // Rank: 必需
-            const rankImgPromise = AssetsManager.getLocalImage(`maimaidx/music_info/rank/${rankImgName}.png`)
+            const rankImgPromise = AssetsManager.getLocalImage(`maimaidx/music_record/rank/${rankImgName}.png`)
             
             // FC: 可选
             let fcImgPromise = Promise.resolve(null) as Promise<string | null>
             if (record.combo_status) {
                 const fcName = formatMaiResourceName(record.combo_status)
-                fcImgPromise = AssetsManager.getLocalImage(`maimaidx/music_info/playbonus/${fcName}.png`)
+                fcImgPromise = AssetsManager.getLocalImage(`maimaidx/music_record/playbonus/${fcName}.png`)
             }
 
             // FS: 可选 (排除 SYNC 文字)
@@ -88,13 +88,13 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
                  const syncUpper = record.sync_status.toUpperCase()
                  if (syncUpper !== 'SYNC') {
                      const fsName = formatMaiResourceName(record.sync_status)
-                     fsImgPromise = AssetsManager.getLocalImage(`maimaidx/music_info/playbonus/${fsName}.png`)
+                     fsImgPromise = AssetsManager.getLocalImage(`maimaidx/music_record/playbonus/${fsName}.png`)
                  }
             }
 
             // Star: 可选
             const starImgPromise = dxStar > 0 
-                ? AssetsManager.getLocalImage(`maimaidx/music_info/star/Star_${dxStar}.png`)
+                ? AssetsManager.getLocalImage(`maimaidx/music_record/star/Star_${dxStar}.png`)
                 : Promise.resolve(null)
 
             const [rankImg, fcImg, fsImg, starImg] = await Promise.all([

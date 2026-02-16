@@ -9,7 +9,8 @@ import { server } from "typescript"
 const RequestSchema = z.object({
     id: z.string(),
     payload: z.record(z.string(), z.unknown()),
-    noCache: z.boolean().default(false)
+    noCache: z.boolean().default(false),
+    is_abstract: z.boolean().default(true)
 })
 
 type Request = z.infer<typeof RequestSchema>
@@ -23,9 +24,12 @@ export async function registerRenderPost(app: Elysia) {
     app.post("/v1/render", async (ctx) => {
         // 验证请求参数
         try {
-            const { id, payload, noCache } = RequestSchema.parse(ctx.body)
+            const { id, payload, noCache, is_abstract } = RequestSchema.parse(
+                ctx.body
+            )
+            const requestPayload = { ...payload, is_abstract }
             // 计算请求参数的 hash 生成缓存键
-            const cacheKey = id + "-" + xxh64(stringify(payload))
+            const cacheKey = id + "-" + xxh64(stringify(requestPayload))
 
             const service = getRenderService()
 
@@ -47,7 +51,7 @@ export async function registerRenderPost(app: Elysia) {
             }
 
             try {
-                const img = await service.render(id, payload)
+                const img = await service.render(id, requestPayload)
                 // 成功生成图片，置入缓存
                 renderCache.set(cacheKey, img)
 

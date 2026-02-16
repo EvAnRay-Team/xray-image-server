@@ -150,6 +150,16 @@ export class AssetsManager {
         const base64 = buffer.toString("base64")
         return `data:${mimeType};base64,${base64}`
     }
+
+
+    public static async getMusicCover(musicId: number, isAbstract: boolean): Promise<string> {
+        if (isAbstract) {
+            const abstractDoc = await prismaClient.abstracts.findFirst({ where: { music_id: musicId } })
+            return await this.getRemoteImage(abstractDoc?.file_key!)
+        } else {
+            return await this.getLocalImage(`maimaidx/normal_cover/${musicId}.png`)
+        }
+    }
 }
 
 let prismaClient: PrismaClient
