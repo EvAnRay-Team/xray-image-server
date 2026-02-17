@@ -33,7 +33,7 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
         const [bgImg, coverImg, typeIconImg, mask1Img, mask2Img] = await Promise.all([
             AssetsManager.getLocalImage(bgPath),
             AssetsManager.getMusicCover(musicId, is_abstract),
-            AssetsManager.getLocalImage(`maimaidx/music_record/类型/${basic_info.type}.png`),
+            AssetsManager.getLocalImage(`maimaidx/music_record/type/${basic_info.type}.png`),
             AssetsManager.getLocalImage(`maimaidx/music_record/mask/mask_1.png`),
             AssetsManager.getLocalImage(`maimaidx/music_record/mask/mask_2.png`)
         ])
@@ -43,7 +43,7 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
         if (VERSION_LOGO_MAP[basic_info.version.cn_ver]) {
             try {
                 const verCode = VERSION_LOGO_MAP[basic_info.version.cn_ver]
-                versionLogoImg = await AssetsManager.getLocalImage(`maimaidx/music_record/版本牌/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
+                versionLogoImg = await AssetsManager.getLocalImage(`maimaidx/版本牌/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
             } catch (e) {
                 console.error("Failed to load version logo", e)
             }
@@ -184,10 +184,10 @@ export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
                     ...absoluteStyle(980, 622),
                 }}>{basic_info.bpm}</span>
 
-                {/* 元数据：流派 */}
+                {/* 元数据：分类 */}
                 <span style={{ 
                     fontFamily: "MetaFont", 
-                    fontSize: 47, 
+                    fontSize: 44, 
                     color: "white",
                     transform: "translate(-50%, -50%)",
                     ...absoluteStyle(1208.5, 622),
