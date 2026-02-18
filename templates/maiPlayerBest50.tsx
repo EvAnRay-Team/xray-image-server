@@ -5,7 +5,7 @@ import { absoluteStyle, formatMaiResourceName } from "../core/utils"
 import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
 import { MaiMusicRecordSchema } from "../core/mai-dto"
 
-export const playerBest50Template = createRenderTemplate("playerBest50")
+export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     //单曲卡片内字体
     .addFont({ id : "TtielFont" , filename: "FOT-NewRodinProN-UB.otf"})//歌曲标题
     .addFont({ id : "MetaFont" , filename: "RoGSanSrfStd-Bd.otf"})//完成率,排名,id

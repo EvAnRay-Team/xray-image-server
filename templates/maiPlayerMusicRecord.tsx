@@ -8,7 +8,7 @@ import { MaiMusicRecordSchema } from "../core/mai-dto"
 
 import { VERSION_LOGO_MAP, SPECIAL_MUSIC_BG_MAP, MUSIC_TYPE_ICON_MAP } from "../core/mai-constants"
 
-export const maiMusicRecordTemplate = createRenderTemplate("maiMusicRecord")
+export const maiPlayerMusicRecordTemplate = createRenderTemplate("maiPlayerMusicRecord")
     .addFont({ id: "TitleFont", filename: "FOT-NewRodinProN-UB.otf" })
     .addFont({ id: "FallbackFont", filename: "SEGUISYM.TTF" }) // Global fallback
     .addFont({ id: "MetaFont", filename: "江城圆体 700W.ttf" })
