@@ -153,12 +153,23 @@ export class AssetsManager {
 
 
     public static async getMusicCover(musicId: number, isAbstract: boolean): Promise<string> {
-        if (isAbstract) {
-            const abstractDoc = await prismaClient.abstracts.findFirst({ where: { music_id: musicId } })
-            return await this.getRemoteImage(abstractDoc?.file_key!)
-        } else {
-            return await this.getLocalImage(`maimaidx/normal_cover/${musicId}.png`)
+        const localCoverPath = `maimaidx/normal_cover/${musicId}.png`
+        if (!isAbstract) {
+            return await this.getLocalImage(localCoverPath)
         }
+        if (!prismaClient) {
+            return await this.getLocalImage(localCoverPath)
+        }
+        const list = await prismaClient.abstracts.findMany({ where: { music_id: musicId } })
+        if (list.length === 0) {
+            return await this.getLocalImage(localCoverPath)
+        }
+        const randomIndex = Math.floor(Math.random() * list.length)
+        const picked = list[randomIndex]
+        if (!picked?.file_key) {
+            return await this.getLocalImage(localCoverPath)
+        }
+        return await this.getRemoteImage(picked.file_key)
     }
 }
 
