@@ -3,8 +3,49 @@ import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
 import { absoluteStyle, formatMaiResourceName } from "../core/utils"
 import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
-import { MaiMusicRecordSchema } from "../core/mai-dto"
+// import { MaiMusicRecordSchema } from "../core/mai-dto"
 // import { logger } from "../core/logger"
+
+const MaiPlayerMusicRecordSchema = z.object({
+    basic_info: z.object({
+        id: z.union([z.number(), z.string()]),
+        title: z.string(),
+        artist: z.string(),
+        bpm: z.number(),
+        genre: z.string(),
+        version: z.object({
+            text: z.string(),
+            id: z.number(),
+            cn_ver: z.string(),
+            short_ver: z.string()
+        }),
+        type: z.string()
+    }),
+    charts: z.array(z.object({
+        difficulty: z.number(),
+        level: z.string(),
+        level_lable: z.string(),
+        constant: z.number(),
+        designer: z.string(),
+        notes: z.object({
+            total: z.number(),
+            tap: z.number(),
+            hold: z.number(),
+            slide: z.number(),
+            touch: z.number(),
+            break_note: z.number()
+        })
+    })),
+    records: z.array(z.object({
+        difficulty: z.number(),
+        achievements: z.number(),
+        dx_score: z.number(),
+        combo_status: z.string().nullable(),
+        sync_status: z.string().nullable(),
+        rate: z.string().nullable()
+    })),
+    is_abstract: z.boolean().default(true)
+})
 
 import { VERSION_LOGO_MAP, SPECIAL_MUSIC_BG_MAP, MUSIC_TYPE_ICON_MAP } from "../core/mai-constants"
 
@@ -17,7 +58,7 @@ export const maiPlayerMusicRecordTemplate = createRenderTemplate("maiPlayerMusic
         width: 1700,
         height: 1800
     })
-    .setInput(MaiMusicRecordSchema)
+    .setInput(MaiPlayerMusicRecordSchema)
     .setElement(async (input) => {
         const { basic_info, charts, records, is_abstract} = input
 

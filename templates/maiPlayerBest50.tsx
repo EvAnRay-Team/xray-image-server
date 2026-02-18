@@ -3,7 +3,6 @@ import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
 import { absoluteStyle, formatMaiResourceName } from "../core/utils"
 import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
-import { MaiMusicRecordSchema } from "../core/mai-dto"
 
 export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     //单曲卡片内字体

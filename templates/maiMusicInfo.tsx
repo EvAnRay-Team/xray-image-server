@@ -3,8 +3,41 @@ import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
 import { absoluteStyle } from "../core/utils"
 // import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
-import { MaiMusicRecordSchema } from "../core/mai-dto"
+// import { MaiMusicRecordSchema } from "../core/mai-dto"
 import { VERSION_LOGO_MAP, SPECIAL_MUSIC_BG_MAP } from "../core/mai-constants"
+
+const MaiMusicInfoSchema = z.object({
+    basic_info: z.object({
+        id: z.union([z.number(), z.string()]),
+        title: z.string(),
+        artist: z.string(),
+        bpm: z.number(),
+        genre: z.string(),
+        version: z.object({
+            text: z.string(),
+            id: z.number(),
+            cn_ver: z.string(),
+            short_ver: z.string()
+        }),
+        type: z.string()
+    }),
+    charts: z.array(z.object({
+        difficulty: z.number(),
+        level: z.string(),
+        level_lable: z.string(),
+        constant: z.number(),
+        designer: z.string(),
+        notes: z.object({
+            total: z.number(),
+            tap: z.number(),
+            hold: z.number(),
+            slide: z.number(),
+            touch: z.number(),
+            break_note: z.number()
+        })
+    })),
+    is_abstract: z.boolean().default(true)
+})
 
 export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
     .addFont({ id: "TitleFont", filename: "FOT-NewRodinProN-UB.otf" })
@@ -16,7 +49,7 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         width: 1700,
         height: 2000 // 参考 Python 的 2000 高度
     })
-    .setInput(MaiMusicRecordSchema)
+    .setInput(MaiMusicInfoSchema)
     .setElement(async (input) => {
         const { basic_info, charts, is_abstract } = input
 
@@ -61,15 +94,7 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         let infoBgImg: string | null = null
         let creatorBgImg: string | null = null
 
-        if (!isSpecialBg) {
-             // Python 逻辑:
-             // 如果有Remaster难度 (len > 4): 
-             //    信息背景 = im_circle_2.png
-             //    谱师背景 = cr_circle_2.png
-             // 否则:
-             //    信息背景 = im_circle_1.png
-             //    谱师背景 = cr_circle_1.png
-             
+        if (!isSpecialBg) {             
              const suffix = hasRemaster ? "2" : "1"
              const [iBg, cBg] = await Promise.all([
                  AssetsManager.getLocalImage(`maimaidx/music_info/information/im_circle_${suffix}.png`),
