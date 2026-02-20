@@ -61,6 +61,44 @@ export const DX_STAR_MAP = [
     { min: 0,   star: 0, type: 'greater' }, // 默认 0
 ] as const;
 
+// rat 图阈值 -> 文件名 映射表（rating 升序匹配第一个满足 min 的项）
+export const RAT_THRESHOLDS = [
+    { min: 15000, name: "rat_150" },
+    { min: 14500, name: "rat_145" },
+    { min: 14000, name: "rat_140" },
+    { min: 13000, name: "rat_130" },
+    { min: 12000, name: "rat_120" },
+    { min: 10000, name: "rat_100" },
+    { min:  8000, name: "rat_080" },
+    { min:  6000, name: "rat_060" },
+    { min:  4000, name: "rat_040" },
+    { min:  3000, name: "rat_030" },
+    { min:  2000, name: "rat_020" },
+    { min:     0, name: "rat_000" },
+] as const;
+
+// dan 字段值 -> 文件名前缀映射
+// dan 0-23  对应 nameplate/dan/dan_XX.png
+// dan 24-48 对应 nameplate/dan/fbr_XX.png（值 - 24，1-based，即 24->fbr_01）
+// 传入 custom_config.dan，返回完整相对路径（不含扩展名）
+export function getDanFileStem(dan: number): string {
+    if (dan <= 23) {
+        return `dan/dan_${String(dan).padStart(2, "0")}`;
+    }
+    // fbr 序号从 1 开始，dan=24 -> fbr_01
+    const fbrIndex = dan - 23;
+    return `dan/fbr_${String(fbrIndex).padStart(2, "0")}`;
+}
+
+// title 称号框阈值 -> 文件名 映射表
+export const TITLE_THRESHOLDS = [
+    { min: 15000, name: "15000" },
+    { min: 14000, name: "14000" },
+    { min: 13000, name: "13000" },
+    { min: 12000, name: "12000" },
+    { min:     0, name: "10000" },
+] as const;
+
 // #endregion
 
 /**
