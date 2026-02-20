@@ -5,6 +5,7 @@ import { absoluteStyle } from "../core/utils"
 // import { getRank, getDxStar, getDxRating, getChartMaxDxScore } from "../core/mai-logic"
 // import { MaiMusicRecordSchema } from "../core/mai-dto"
 import { VERSION_LOGO_MAP, SPECIAL_MUSIC_BG_MAP } from "../core/mai-constants"
+import { MUSIC_INFO_BG_THEME_MAP, MUSIC_INFO_PANEL_THEME_MAP } from "../core/mai-logic"
 
 const MaiMusicInfoSchema = z.object({
     basic_info: z.object({
@@ -36,6 +37,9 @@ const MaiMusicInfoSchema = z.object({
             break_note: z.number()
         })
     })),
+    theme_config: z.object({
+        background: z.string()
+    }).default({ background: "splash" }),
     is_abstract: z.boolean().default(true)
 })
 
@@ -51,7 +55,8 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
     })
     .setInput(MaiMusicInfoSchema)
     .setElement(async (input) => {
-        const { basic_info, charts, is_abstract } = input
+        const { basic_info, charts, theme_config, is_abstract } = input
+        const theme = theme_config.background
 
         // 1. 准备背景
         const musicId = Number(basic_info.id)
@@ -63,9 +68,12 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         const specialBgName = SPECIAL_MUSIC_BG_MAP[musicId]
         const isSpecialBg = !!specialBgName
 
+        const bgPrefix = MUSIC_INFO_BG_THEME_MAP[theme] ?? "bg_splash"
+        const panelPrefix = MUSIC_INFO_PANEL_THEME_MAP[theme] ?? "splash"
+
         const bgPath = isSpecialBg
             ? `maimaidx/music_info/special_bg/${specialBgName}`
-            : "maimaidx/music_info/background/bg_circle.png";
+            : `maimaidx/music_info/background/${bgPrefix}.png`;
 
         // 2. 预加载基础资源
         const [bgImg, coverImg, typeIconImg] = await Promise.all([
@@ -97,8 +105,8 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         if (!isSpecialBg) {             
              const suffix = hasRemaster ? "2" : "1"
              const [iBg, cBg] = await Promise.all([
-                 AssetsManager.getLocalImage(`maimaidx/music_info/information/im_circle_${suffix}.png`),
-                 AssetsManager.getLocalImage(`maimaidx/music_info/creator/cr_circle_${suffix}.png`)
+                 AssetsManager.getLocalImage(`maimaidx/music_info/information/im_${panelPrefix}_${suffix}.png`),
+                 AssetsManager.getLocalImage(`maimaidx/music_info/creator/cr_${panelPrefix}_${suffix}.png`)
              ])
              infoBgImg = iBg
              creatorBgImg = cBg

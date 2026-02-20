@@ -4,6 +4,8 @@
  * 移植自 xray_mai_bot_v2
  */
 
+import { AssetsManager } from "./asset";
+
 // #region 字典数据定义
 
 interface RatingCoefficient {
@@ -99,6 +101,69 @@ export const TITLE_THRESHOLDS = [
     { min:     0, name: "10000" },
 ] as const;
 
+// player_best50 背景主题 → 文件名映射（含 plus 版本，key = theme_config.background）
+export const BACKGROUND_THEME_MAP: Record<string, string> = {
+    "buddies":   "buddies",
+    "buddiesp":  "buddiesp",
+    "circle":    "circle",
+    "dx":        "dx",
+    "festival":  "festival",
+    "festivalp": "festivalp",
+    "prism":     "prism",
+    "prismp":    "prismp",
+    "splash":    "splash",
+    "splashp":   "splashp",
+    "universe":  "universe",
+};
+
+// player_best50 rank 图标主题前缀映射（key = theme_config.rank；plus 版共用同一套 rank 图）
+export const RANK_THEME_MAP: Record<string, string> = {
+    "defaut":    "defaut",
+    "buddies":   "buddies",
+    "buddiesp":  "buddies",
+    "circle":    "circle",
+    "dx":        "dx",
+    "festival":  "festival",
+    "festivalp": "festival",
+    "prism":     "prism",
+    "prismp":    "prism",
+    "splash":    "splash",
+    "splashp":   "splash",
+    "universe":  "universe",
+};
+
+// music_info 背景文件名映射（key = 全局主题；对应 music_info/background/bg_*.png）
+export const MUSIC_INFO_BG_THEME_MAP: Record<string, string> = {
+    "buddies":   "bg_bud",
+    "buddiesp":  "bg_budp",
+    "circle":    "bg_circle",
+    "dx":        "bg_dx",
+    "festival":  "bg_fes",
+    "festivalp": "bg_fesp",
+    "prism":     "bg_prism",
+    "prismp":    "bg_prismp",
+    "splash":    "bg_splash",
+    "splashp":   "bg_splashp",
+    "universe":  "bg_uni",
+};
+
+// music_info information/creator 面板主题前缀（key = 全局主题；plus 版共用同一套面板图）
+// 对应 music_info/information/im_{prefix}_{1|2}.png
+//         music_info/creator/cr_{prefix}_{1|2}.png
+export const MUSIC_INFO_PANEL_THEME_MAP: Record<string, string> = {
+    "buddies":   "bud",
+    "buddiesp":  "bud",
+    "circle":    "circle",
+    "dx":        "dx",
+    "festival":  "fes",
+    "festivalp": "fes",
+    "prism":     "prism",
+    "prismp":    "prism",
+    "splash":    "splash",
+    "splashp":   "splash",
+    "universe":  "uni",
+};
+
 // #endregion
 
 /**
@@ -157,4 +222,30 @@ export function getDxStar(dxScore: number, totalNotes: number): number {
     }
     
     return 0;
+}
+
+/**
+ * 封面 id 解析：4位id前补1；5位id若封面不存在则回退到去掉首位后的id
+ */
+export async function resolveCoverId(id: number): Promise<{ coverId: number; coverSrc: string }> {
+    let coverId = id;
+    // 4位数 id → 补首位 1
+    if (id >= 1000 && id <= 9999) {
+        coverId = id + 10000;
+    }
+    // 5位数 id → 先尝试原始 id，找不到则降为去掉首位的 id
+    if (coverId >= 10000 && coverId <= 99999) {
+        try {
+            const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${coverId}.png`);
+            return { coverId, coverSrc: src };
+        } catch {
+            // 封面不存在，去掉首位数字（例如 10333 → 333）
+            const fallbackId = coverId % 10000;
+            const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${fallbackId}.png`);
+            return { coverId: fallbackId, coverSrc: src };
+        }
+    }
+    // 其他情况直接加载
+    const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${coverId}.png`);
+    return { coverId, coverSrc: src };
 }
