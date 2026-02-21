@@ -164,6 +164,17 @@ export const MUSIC_INFO_PANEL_THEME_MAP: Record<string, string> = {
     "universe":  "uni",
 };
 
+// 旅行伙伴等级 -> 素材编号映射 (0, 9, 49, 99, 299, 999, 9999)
+export const CHARA_LEVEL_THRESHOLDS = [
+    { min: 9999, theme: 7 },
+    { min:  999, theme: 6 },
+    { min:  299, theme: 5 },
+    { min:   99, theme: 4 },
+    { min:   49, theme: 3 },
+    { min:    9, theme: 2 },
+    { min:    0, theme: 1 },
+] as const;
+
 // #endregion
 
 /**
@@ -225,6 +236,30 @@ export function getDxStar(dxScore: number, totalNotes: number): number {
 }
 
 /**
+ * 根据目标 Rating 计算推荐的定数
+ */
+export function getRecommendData(ra: number) {
+    const getTargetDs = (targetRa: number, achievement: number) => {
+        // 1.0 到 15.0，步长 0.1
+        for (let d = 10; d <= 150; d++) {
+            const ds = d / 10;
+            const resRa = getDxRating(ds, achievement);
+            if (resRa === targetRa || resRa === targetRa + 1 || resRa === targetRa + 2) {
+                return ds;
+            }
+        }
+        return -1;
+    };
+
+    return {
+        sssp: getTargetDs(ra, 100.5),
+        sss:  getTargetDs(ra, 100.0),
+        ssp:  getTargetDs(ra, 99.5),
+        ss:   getTargetDs(ra, 99.0),
+    };
+}
+
+/**
  * 封面 id 解析：4位id前补1；5位id若封面不存在则回退到去掉首位后的id
  */
 export async function resolveCoverId(id: number): Promise<{ coverId: number; coverSrc: string }> {
@@ -248,4 +283,14 @@ export async function resolveCoverId(id: number): Promise<{ coverId: number; cov
     // 其他情况直接加载
     const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${coverId}.png`);
     return { coverId, coverSrc: src };
+}
+
+/**
+ * 根据伙伴等级获取对应的素材主题编号 (1-7)
+ */
+export function getCharaTheme(level: number): number {
+    for (const item of CHARA_LEVEL_THRESHOLDS) {
+        if (level >= item.min) return item.theme;
+    }
+    return 1;
 }

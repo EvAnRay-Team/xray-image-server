@@ -1,7 +1,7 @@
 import z from "zod"
 import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
-import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId } from "../core/mai-logic"
+import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme } from "../core/mai-logic"
 
 // ==================== 数据验证模型定义 ====================
 
@@ -22,7 +22,7 @@ export const ScoreRecordSchema = z.object({
 export const MaiPlayerBest50Schema = z.object({
     user_info: z.object({
         nickname: z.string(),
-        plate: z.number().nullable(),
+        plate: z.number().nullish(),
         rating: z.number()
     }),
     custom_config: z.object({ // 个性化选项
@@ -31,23 +31,23 @@ export const MaiPlayerBest50Schema = z.object({
             rank: z.string()
         }),
         name_plate: z.object({
-            icon: z.number().nullable(),
-            plate: z.number().nullable(),
-            class: z.number().nullable(),
-            dan: z.number().nullable()
+            icon: z.union([z.number(), z.string()]).nullish(),
+            plate: z.union([z.number(), z.string()]).nullish(),
+            class: z.number().nullish(),
+            dan: z.number().nullish()
         }),
         recommend_module: z.object({
             is_enabled: z.boolean(),
-            item: z.number().nullable()
+            item: z.string().nullish()
         }),
         chara_module: z.object({
             is_enabled: z.boolean(),
             item: z.array(z.object({
-                id: z.number(),
+                id: z.union([z.number(), z.string()]),
                 level: z.number()
             }))
         }),
-        frame: z.number().nullable()
+        frame: z.number().nullish()
     }),
     best_35: z.array(ScoreRecordSchema),
     best_15: z.array(ScoreRecordSchema),
@@ -225,6 +225,202 @@ function RenderCard({
     )
 }
 
+// 推荐定数框挂件封装聚合
+function RenderRecommend({
+    recommendImg,
+    placeholderImg,
+    b35Rec,
+    b15Rec,
+    theme
+}: {
+    recommendImg: string | null
+    placeholderImg: string | null
+    b35Rec: any
+    b15Rec: any
+    theme: string
+}) {
+    if (!recommendImg) return null;
+
+    const textColor = theme === "defaut" ? "#0138cc" : "white"
+
+    const renderRows = (recData: any, startY: number) => {
+        if (!recData) return null;
+        return [recData.recommended, recData.min].map((row, rowIndex) => {
+            const y = startY + rowIndex * 57;
+            return Object.values(row).map((val: any, colIndex: number) => {
+                const x = 260 + colIndex * 158;
+                if (val === -1) {
+                    return placeholderImg ? (
+                        <img key={`p-${y}-${x}`} src={placeholderImg} style={{
+                            position: "absolute",
+                            left: x - 74,
+                            top: y - 28,
+                            width: 156,
+                            height: 54
+                        }} />
+                    ) : null;
+                }
+                return (
+                    <span key={`v-${y}-${x}`} style={{
+                        position: "absolute",
+                        left: x,
+                        top: y,
+                        fontFamily: "MetaFont",
+                        fontSize: 37,
+                        color: textColor,
+                        transform: "translate(-50%, -50%)",
+                        whiteSpace: "nowrap"
+                    }}>
+                        {(val as number).toFixed(1)}
+                    </span>
+                );
+            });
+        });
+    };
+
+    return (
+        <div style={{
+            position: "absolute",
+            left: 60,
+            top: 273,
+            width: 998,
+            height: 394,
+            display: "flex",
+            overflow: "visible",
+            zIndex: 10,
+        }}>
+            <img src={recommendImg} alt="recommend" style={{ width: "100%", height: "100%", pointerEvents: "none", position: "absolute", left: 0, top: 0 }} />
+            <div style={{ display: "flex", position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
+                {renderRows(b35Rec, 142)}
+            </div>
+            <div style={{ display: "flex", position: "absolute", left: 0, top: 0, width: "100%", height: "100%" }}>
+                {renderRows(b15Rec, 279)}
+            </div>
+        </div>
+    )
+}
+
+// 旅行伙伴挂件封装聚合
+function RenderChara({
+    items,
+    charaImgs,
+    borderAssets
+}: {
+    items: { id: number | string; level: number }[]
+    charaImgs: (string | null)[]
+    borderAssets: {
+        leftMask: string | null
+        leftFrame: string | null
+        rightMask: string | null
+        rightBases: (string | null)[]
+        rightFrames: (string | null)[]
+    }
+}) {
+    if (items.length === 0) return null
+
+    const leftItem = items[0]
+    const leftImg = charaImgs[0]
+
+    return (
+        <div style={{ position: "absolute", left: 0, top: 0, width: 1700, height: 711, pointerEvents: "none", display: "flex" }}>
+            {/* 最左侧旅行伙伴 */}
+            {leftItem && leftImg && (
+                <div style={{ position: "absolute", left: -80, top: 226, width: 485, height: 485, display: "flex" }}>
+                    <div style={{
+                        width: "100%",
+                        height: "100%",
+                        maskImage: `url(${borderAssets.leftMask})`,
+                        maskPosition: "80px -226px",
+                        maskRepeat: "no-repeat",
+                        WebkitMaskImage: `url(${borderAssets.leftMask})`,
+                        WebkitMaskPosition: "80px -226px",
+                        WebkitMaskRepeat: "no-repeat",
+                        display: "flex"
+                    }}>
+                        <img src={leftImg} style={{ width: "100%", height: "100%" }} />
+                    </div>
+                </div>
+            )}
+
+            {/* 最左侧旅行伙伴等级底板与文字 */}
+            {leftItem && borderAssets.leftFrame && (
+                <div style={{ position: "absolute", left: 58, top: 557, width: 250, height: 60, display: "flex", alignItems: "center" }}>
+                        <img src={borderAssets.leftFrame} style={{ position: "absolute", left: 0, top: 0 }} />
+                        <span style={{
+                            position: "relative",
+                            left: 95,
+                            top: 9,
+                            fontFamily: "LevelFont",
+                            fontSize: 30,
+                            color: "white",
+                            whiteSpace: "nowrap",
+                        }}>
+                        {leftItem.level}
+                        </span>
+                </div>
+            )}
+
+            {/* 右侧旅行伙伴 (最多4个) */}
+            {items.slice(1, 5).map((item, i) => {
+                const charImg = charaImgs[i + 1]
+                if (!charImg) return null
+                const x = 323 + i * 224
+                const y = 283
+                const base = borderAssets.rightBases[i]
+                const frame = borderAssets.rightFrames[i]
+
+                return (
+                    <div key={`chara-${i}`} style={{
+                        position: "absolute",
+                        left: x,
+                        top: y,
+                        width: 226,
+                        height: 429,
+                        display: "flex"
+                    }}>
+                        {/* 底板 */}
+                        {base && <img src={base} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />}
+                        <div style={{
+                            position: "absolute",
+                            left: -44,
+                            top: 67,
+                            width: 327,
+                            height: 327,
+                            maskImage: `url(${borderAssets.rightMask})`,
+                            maskPosition: "44px -67px",
+                            maskRepeat: "no-repeat",
+                            WebkitMaskImage: `url(${borderAssets.rightMask})`,
+                            WebkitMaskPosition: "44px -67px",
+                            WebkitMaskRepeat: "no-repeat",
+                            display: "flex"
+                        }}>
+                            <img src={charImg} style={{ width: "100%", height: "100%" }} />
+                        </div>
+
+                        {/* 上框 */}
+                        {frame && <img src={frame} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />}
+
+                        {/* 等级文字 */}
+                        <div style={{
+                            position: "absolute",
+                            left: 0,
+                            top: 19,
+                            width: 226,
+                            display: "flex",
+                            justifyContent: "center",
+                            alignItems: "baseline",
+                            color: "white",
+                        }}>
+                             <span style={{ fontFamily: "ConstantFont", fontSize: 25, marginRight: 7, position: "relative", top: -1 }}>Lv</span>
+                             <span style={{ fontFamily: "LevelFont", fontSize: 30 }}>{item.level}</span>
+                        </div>
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
 // 顶部姓名信息挂件封装聚合
 function RenderNameplate({
     user_info,
@@ -337,6 +533,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     // 用户数据字体
     .addFont({ id: "RatingFont",   filename: "江城圆体 600W.ttf" })       // 用户 Rating
     .addFont({ id: "UserNameFont", filename: "江城圆体 500W.ttf" })       // 用户名
+    .addFont({ id: "LevelFont",    filename: "FOT-NewRodinProN-EB.otf" }) // 等级数字
     .setOption({
         width: 1700,
         height: 2369
@@ -366,22 +563,75 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             AssetsManager.getLocalImage("maimaidx/player_best50/nameplate/name.png"),
             AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/rat/${ratName}.png`),
             AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/title/${titleName}.png`).catch(() => null),
-            custom_config.name_plate.dan !== null
-                ? AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/${getDanFileStem(custom_config.name_plate.dan)}.png`).catch(() => null)
+            custom_config.name_plate.dan != null
+                ? AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/${getDanFileStem(custom_config.name_plate.dan!)}.png`).catch(() => null)
                 : Promise.resolve(null),
-            custom_config.name_plate.class !== null
+            custom_config.name_plate.class != null
                 ? AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/class/class_${String(custom_config.name_plate.class).padStart(2, "0")}.png`).catch(() => null)
                 : Promise.resolve(null),
-            custom_config.name_plate.plate !== null
+            custom_config.name_plate.plate != null
                 ? AssetsManager.getLocalImage(`maimaidx/collection/plate/plate_${custom_config.name_plate.plate}.png`).catch(() => null)
                 : Promise.resolve(null),
-            custom_config.name_plate.icon !== null
+            custom_config.name_plate.icon != null
                 ? AssetsManager.getLocalImage(`maimaidx/collection/icon/icon_${custom_config.name_plate.icon}.png`).catch(() => null)
                 : Promise.resolve(null),
-            custom_config.frame !== null
+            custom_config.frame != null
                 ? AssetsManager.getLocalImage(`maimaidx/collection/frame/frame_${custom_config.frame}.png`).catch(() => null)
                 : Promise.resolve(null),
         ]) as [string, string, string | null, string | null, string | null, string | null, string | null, string | null]
+
+        // 预加载推荐定数框资源
+        const recTheme = custom_config.recommend_module?.item 
+            ? (RANK_THEME_MAP[custom_config.recommend_module.item] ?? "defaut")
+            : (RANK_THEME_MAP[custom_config.theme_config.rank] ?? "defaut")
+        const [recommendImg, recommendPlaceholderImg] = custom_config.recommend_module?.is_enabled
+            ? await Promise.all([
+                AssetsManager.getLocalImage(`maimaidx/player_best50/recommend/${recTheme}_rec.png`).catch(() => null),
+                AssetsManager.getLocalImage(`maimaidx/player_best50/recommend/${recTheme}_rec_placeholder.png`).catch(() => null)
+            ])
+            : [null, null]
+
+        // 计算推荐定数逻辑
+        const b35Rates = best_35.map(r => r.rate)
+        const b35Min = b35Rates.length > 0 ? Math.min(...b35Rates) : 0
+        const b35Max = b35Rates.length > 0 ? Math.max(...b35Rates) : 0
+        const b35Avg = Math.floor((b35Max + b35Min) / 2)
+
+        const b15Rates = best_15.map(r => r.rate)
+        const b15Min = b15Rates.length > 0 ? Math.min(...b15Rates) : 0
+        const b15Max = b15Rates.length > 0 ? Math.max(...b15Rates) : 0
+        const b15Avg = Math.floor((b15Max + b15Min) / 2)
+
+        const b35Rec = custom_config.recommend_module?.is_enabled ? {
+            recommended: getRecommendData(b35Avg),
+            min: getRecommendData(b35Min)
+        } : null
+
+        const b15Rec = custom_config.recommend_module?.is_enabled ? {
+            recommended: getRecommendData(b15Avg),
+            min: getRecommendData(b15Min)
+        } : null
+
+        // ==================== 旅行伙伴资源加载 ====================
+        const charaItems = custom_config.chara_module?.is_enabled ? custom_config.chara_module.item : []
+        const charaImgs = await Promise.all(
+            charaItems.map(item => AssetsManager.getLocalImage(`maimaidx/player_best50/chara/UI_Chara_${String(item.id).padStart(6, "0")}.png`).catch(() => null))
+        )
+
+        // 伙伴边框资源
+        const [leftMask, rightMask] = await Promise.all([
+            AssetsManager.getLocalImage("maimaidx/player_best50/chara_border/left_chara_mask.png"),
+            AssetsManager.getLocalImage("maimaidx/player_best50/chara_border/chara_mask.png")
+        ])
+
+        const charaThemes = charaItems.map(item => getCharaTheme(item.level))
+        const [leftFrame, rightBases, rightFrames] = await Promise.all([
+            charaThemes[0] != null 
+                ? AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/left_chara_frama_${charaThemes[0]}.png`).catch(() => null)
+                : Promise.resolve(null),
+            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/chara_base_${t}.png`).catch(() => null))),
+            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/chara_frame_${t}.png`).catch(() => null)))
+        ])
 
         // 预先收集所有曲目
         const allRecords = [...best_35, ...best_15]
@@ -523,6 +773,25 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                     />
                 ))}
 
+                <RenderRecommend 
+                    recommendImg={recommendImg} 
+                    placeholderImg={recommendPlaceholderImg}
+                    b35Rec={b35Rec}
+                    b15Rec={b15Rec}
+                    theme={recTheme}
+                />
+
+                <RenderChara 
+                    items={charaItems}
+                    charaImgs={charaImgs}
+                    borderAssets={{
+                        leftMask,
+                        leftFrame,
+                        rightMask,
+                        rightBases,
+                        rightFrames
+                    }}
+                />
             </div>
         )
     })
