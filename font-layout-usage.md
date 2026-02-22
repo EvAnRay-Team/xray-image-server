@@ -21,9 +21,10 @@
 
 - **列表类版面**
     - **Best50[maiPlayerBest50]**
-        - _用户数据部分_
-            - 用户Rating ["RatingFont"] : "江城圆体 700W.ttf"
-            - 用户名字体 ["UserNameFont"] : "江城圆体 600W.ttf"
+        - _背景板部分_
+            - 用户Rating ["RatingFont"] : "江城圆体 600W.ttf"
+            - 用户名字体 ["UserNameFont"] : "江城圆体 500W.ttf"
+            - B35+B15/推荐歌曲定数/旅行伙伴等级 ["MetaFont"] : "RoGSanSrfStd-Bd.otf"
         - _歌曲卡片部分_
             - 标题字体 ["TitleFont"] : "FOT-NewRodinProN-UB.otf"
             - 完成率/顺序/歌曲id ["MetaFont"] : "RoGSanSrfStd-Bd.otf"

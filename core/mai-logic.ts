@@ -178,6 +178,15 @@ export const CHARA_LEVEL_THRESHOLDS = [
 // #endregion
 
 /**
+ * 映射 play bonus (combo/sync) 状态字符串
+ * 将 fsd/fsdp 全量映射为 fdx/fdxp
+ */
+export function mapPlayBonusStatus(status: string | null | undefined): string {
+    if (!status) return "";
+    return status.replace(/fsdp/g, "fdxp").replace(/fsd/g, "fdx");
+}
+
+/**
  * 达成率 (Achievement) 转 评级 (Rank)
  */
 export function getRank(achievement: number): string {

@@ -1,7 +1,7 @@
 import z from "zod"
 import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
-import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme } from "../core/mai-logic"
+import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme, mapPlayBonusStatus } from "../core/mai-logic"
 
 // ==================== 数据验证模型定义 ====================
 
@@ -15,7 +15,8 @@ export const ScoreRecordSchema = z.object({
     sync_status: z.string(),
     rate: z.number(),
     title: z.string(),
-    constant: z.number()
+    constant: z.number(),
+    dx_star: z.number().nullish()
 })
 
 // 用户数据
@@ -102,7 +103,6 @@ function RenderCard({
     comboMap,
     syncMap,
     starMap,
-    rankTop
 }: {
     r: ScoreRecord
     index: number
@@ -115,7 +115,6 @@ function RenderCard({
     comboMap: Map<`${number}_${number}`, string | null>
     syncMap: Map<`${number}_${number}`, string | null>
     starMap: Map<`${number}_${number}`, string | null>
-    rankTop: number
 }) {
     const col = index % 5
     const row = Math.floor(index / 5)
@@ -156,7 +155,8 @@ function RenderCard({
                 style={{ position: "absolute", left: 0, top: 0 }} />
             {/* RANK */}
             <img src={rankImg} alt="rank"
-                style={{ position: "absolute", left: 0, top: rankTop }} />
+                style={{ position: "absolute", left: 0, top: 0 }} />
+
             {/* COMBO */}
             {comboImg && (
                 <img src={comboImg} alt="combo"
@@ -347,11 +347,12 @@ function RenderChara({
                 <div style={{ position: "absolute", left: 58, top: 557, width: 250, height: 60, display: "flex", alignItems: "center" }}>
                         <img src={borderAssets.leftFrame} style={{ position: "absolute", left: 0, top: 0 }} />
                         <span style={{
-                            position: "relative",
-                            left: 95,
-                            top: 9,
-                            fontFamily: "LevelFont",
-                            fontSize: 30,
+                            position: "absolute",
+                            left: 162,
+                            top: 39,
+                            transform: "translate(-50%, -50%)",
+                            fontFamily: "MetaFont",
+                            fontSize: 32,
                             color: "white",
                             whiteSpace: "nowrap",
                         }}>
@@ -533,7 +534,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     // 用户数据字体
     .addFont({ id: "RatingFont",   filename: "江城圆体 600W.ttf" })       // 用户 Rating
     .addFont({ id: "UserNameFont", filename: "江城圆体 500W.ttf" })       // 用户名
-    .addFont({ id: "LevelFont",    filename: "FOT-NewRodinProN-EB.otf" }) // 等级数字
+    .addFont({ id: "LevelFont",    filename: "FOT-NewRodinProN-EB.otf" }) // 右侧侧伙伴等级数字
     .setOption({
         width: 1700,
         height: 2369
@@ -657,12 +658,6 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
 
         // 预加载所有卡片资源
         const rankTheme = RANK_THEME_MAP[custom_config.theme_config.rank] ?? "defaut"
-        let rankTop = 1
-        if (["defaut", "credits", "festival"].includes(rankTheme)) {
-            rankTop = 0
-        } else if (["buddies", "prism"].includes(rankTheme)) {
-            rankTop = 2
-        }
         const [typeMap, rankMap, comboMap, syncMap, starMap] = await Promise.all([
             Promise.all(
                 allRecords.map(async (r) => {
@@ -678,23 +673,26 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
+
             Promise.all(
                 allRecords.map(async (r) => {
                     if (!r.combo_status) return [`${r.id}_${r.difficulty}`, null] as const
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${r.combo_status}.png`)
+                    const status = mapPlayBonusStatus(r.combo_status)
+                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${status}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
             Promise.all(
                 allRecords.map(async (r) => {
                     if (!r.sync_status) return [`${r.id}_${r.difficulty}`, null] as const
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${r.sync_status}.png`)
+                    const status = mapPlayBonusStatus(r.sync_status)
+                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${status}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
             Promise.all(
                 allRecords.map(async (r) => {
-                    const starLevel = 0
+                    const starLevel = r.dx_star ?? 0
                     if (starLevel === 0) return [`${r.id}_${r.difficulty}`, null] as const
                     const clampedStar = Math.min(starLevel, 5)
                     const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/star/star_${clampedStar}.png`)
@@ -751,7 +749,6 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                         comboMap={comboMap}
                         syncMap={syncMap}
                         starMap={starMap}
-                        rankTop={rankTop}
                     />
                 ))}
 
@@ -769,7 +766,6 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                         comboMap={comboMap}
                         syncMap={syncMap}
                         starMap={starMap}
-                        rankTop={rankTop}
                     />
                 ))}
 
