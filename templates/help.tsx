@@ -3,7 +3,7 @@ import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
 
 // 使用顶层 await 预加载图片（Bun 支持顶层 await）
-const helpImageSrc = await AssetsManager.getLocalImage("help.png")
+const helpImageSrc = await AssetsManager.getAssetImage("layout/Help.png")
 
 export const helpTemplate = createRenderTemplate("help")
     .addFont({ id: "font1", filename: "smileysans.ttf" })

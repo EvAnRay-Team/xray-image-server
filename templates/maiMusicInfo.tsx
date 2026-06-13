@@ -72,14 +72,14 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         const panelPrefix = MUSIC_INFO_PANEL_THEME_MAP[theme] ?? "splash"
 
         const bgPath = isSpecialBg
-            ? `maimaidx/music_info/special_bg/${specialBgName}`
-            : `maimaidx/music_info/background/${bgPrefix}.png`;
+            ? `layout/mai_music_info/special_bg/${specialBgName}`
+            : `layout/mai_music_info/background/${bgPrefix}.png`;
 
         // 2. 预加载基础资源
         const [bgImg, coverImg, typeIconImg] = await Promise.all([
-            AssetsManager.getLocalImage(bgPath),
+            AssetsManager.getAssetImage(bgPath),
             AssetsManager.getMusicCover(musicId, is_abstract),
-            AssetsManager.getLocalImage(`maimaidx/music_info/type/${basic_info.type}.png`),
+            AssetsManager.getAssetImage(`layout/mai_music_info/type/${basic_info.type}.png`),
         ])
 
         // 3. 准备版本图标
@@ -87,7 +87,7 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         if (VERSION_LOGO_MAP[basic_info.version.cn_ver]) {
             try {
                 const verCode = VERSION_LOGO_MAP[basic_info.version.cn_ver]
-                versionLogoImg = await AssetsManager.getLocalImage(`maimaidx/版本牌/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
+                versionLogoImg = await AssetsManager.getAssetImage(`layout/mai_version/UI_CMN_TabTitle_MaimaiTitle_Ver${verCode}.png`)
             } catch (e) {
                 console.error("Failed to load version logo", e)
             }
@@ -105,8 +105,8 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         if (!isSpecialBg) {             
              const suffix = hasRemaster ? "2" : "1"
              const [iBg, cBg] = await Promise.all([
-                 AssetsManager.getLocalImage(`maimaidx/music_info/information/im_${panelPrefix}_${suffix}.png`),
-                 AssetsManager.getLocalImage(`maimaidx/music_info/creator/cr_${panelPrefix}_${suffix}.png`)
+                 AssetsManager.getAssetImage(`layout/mai_music_info/information/im_${panelPrefix}_${suffix}.png`),
+                 AssetsManager.getAssetImage(`layout/mai_music_info/creator/cr_${panelPrefix}_${suffix}.png`)
              ])
              infoBgImg = iBg
              creatorBgImg = cBg

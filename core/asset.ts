@@ -3,7 +3,7 @@ import type { Config } from "./config"
 import { prisma } from "./db"
 import COS from "cos-nodejs-sdk-v5"
 import { mkdirSync, writeFileSync } from "fs"
-import { dirname, join } from "path"
+import { basename, join } from "path"
 
 export class AssetsManager {
     private constructor() {}
@@ -21,33 +21,26 @@ export class AssetsManager {
     }
 
     /**
-     * 获取远程图片（从 COS）
-     * 先检查本地文件是否存在，如果存在则直接读取，否则从 COS 下载到本地
+     * 获取 COS 抽象曲绘（下载缓存到 assets/cover/mai_cover_abstract/）
      * @param file_key COS 中的文件 key
-     * @returns base64 data URL 字符串，可直接用于 satori 的 <img src> 属性
      */
     public static async getRemoteImage(file_key: string): Promise<string> {
-        // 按照 file_key 的完整路径保存，保留目录结构
-        // 例如：maimaidx/abstract_cover/f3/8e/file.jpg -> assets/remote/image/maimaidx/abstract_cover/f3/8e/file.jpg
-        const localPath = join(process.cwd(), "assets", "remote", "image", file_key)
+        const filename = basename(file_key)
+        const relativePath = join("cover", "mai_cover_abstract", filename)
+        const localPath = join(process.cwd(), "assets", relativePath)
         const localFile = Bun.file(localPath)
 
-        // 检查本地文件是否存在
         if (await localFile.exists()) {
-            // 文件存在，直接读取并返回
-            const arrayBuffer = await localFile.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            return this.bufferToDataURL(buffer, file_key)
+            const buffer = Buffer.from(await localFile.arrayBuffer())
+            return this.bufferToDataURL(buffer, filename)
         }
 
-        // 检查 OSS 客户端是否已初始化
         if (!ossClient || !bucket || !region) {
             throw new Error(
                 `OSS client not initialized. Please call AssetsManager.initialize(config) first and ensure enableOnlineAssets is true.`
             )
         }
 
-        // 文件不存在，从 COS 下载
         try {
             const result = await ossClient.getObject({
                 Bucket: bucket,
@@ -55,18 +48,15 @@ export class AssetsManager {
                 Key: file_key
             }) as any
 
-            // 获取文件内容（可能是 Buffer 或 Stream）
             let fileBuffer: Buffer
             const body = result.Body as any
             if (Buffer.isBuffer(body)) {
                 fileBuffer = body
             } else if (body && typeof body === "object" && "byteLength" in body) {
-                // Uint8Array 或类似的 TypedArray
                 fileBuffer = Buffer.from(body)
             } else if (typeof body === "string") {
                 fileBuffer = Buffer.from(body, "base64")
             } else {
-                // 如果是 Stream，需要转换为 Buffer
                 const chunks: Buffer[] = []
                 for await (const chunk of body) {
                     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
@@ -74,15 +64,10 @@ export class AssetsManager {
                 fileBuffer = Buffer.concat(chunks)
             }
 
-            // 确保目录存在
-            const dir = dirname(localPath)
-            mkdirSync(dir, { recursive: true })
-
-            // 保存文件到本地
+            mkdirSync(join(process.cwd(), "assets", "cover", "mai_cover_abstract"), { recursive: true })
             writeFileSync(localPath, fileBuffer)
 
-            // 返回 base64 data URL
-            return this.bufferToDataURL(fileBuffer, file_key)
+            return this.bufferToDataURL(fileBuffer, filename)
         } catch (error) {
             throw new Error(
                 `Failed to download image from COS (key: ${file_key}): ${error instanceof Error ? error.message : String(error)}`
@@ -113,61 +98,43 @@ export class AssetsManager {
     }
 
     public static async getLocalFont(filename: string) {
-        return await Bun.file(`./assets/static/font/${filename}`).arrayBuffer()
+        return await Bun.file(`./assets/font/${filename}`).arrayBuffer()
     }
 
     /**
-     * 获取本地图片并转换为 base64 data URL
-     * @param filename 图片文件名，会依次尝试以下路径：
-     *   1. ./assets/static/image/${filename}
-     * @returns base64 data URL 字符串，可直接用于 satori 的 <img src> 属性
+     * 读取 assets 下的图片并转为 base64 data URL
+     * @param relativePath 相对 assets/ 的路径，如 layout/mai_music_info/background/bg_dx.png
      */
-    public static async getLocalImage(filename: string): Promise<string> {
-        // 尝试多个可能的路径
-        let file = Bun.file(`./assets/static/image/${filename}`)
+    public static async getAssetImage(relativePath: string): Promise<string> {
+        const file = Bun.file(join(process.cwd(), "assets", relativePath))
 
         if (!(await file.exists())) {
-            throw new Error(`Image file not found: ${filename}`)
+            throw new Error(`Asset file not found: assets/${relativePath}`)
         }
 
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-
-        // 根据文件扩展名确定 MIME 类型
-        const ext = filename.split(".").pop()?.toLowerCase()
-        let mimeType = "image/png" // 默认 PNG
-        if (ext === "jpg" || ext === "jpeg") {
-            mimeType = "image/jpeg"
-        } else if (ext === "gif") {
-            mimeType = "image/gif"
-        } else if (ext === "webp") {
-            mimeType = "image/webp"
-        } else if (ext === "svg") {
-            mimeType = "image/svg+xml"
-        }
-
-        // 转换为 base64 data URL
-        const base64 = buffer.toString("base64")
-        return `data:${mimeType};base64,${base64}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        return this.bufferToDataURL(buffer, basename(relativePath))
     }
 
+    public static async getMaiNormalCover(musicId: number): Promise<string> {
+        return this.getAssetImage(join("cover", "mai_cover_normal", `${musicId}.png`))
+    }
 
     public static async getMusicCover(musicId: number, isAbstract: boolean): Promise<string> {
-        const localCoverPath = `maimaidx/normal_cover/${musicId}.png`
         if (!isAbstract) {
-            return await this.getLocalImage(localCoverPath)
+            return await this.getMaiNormalCover(musicId)
         }
         if (!prismaClient) {
-            return await this.getLocalImage(localCoverPath)
+            return await this.getMaiNormalCover(musicId)
         }
         const list = await prismaClient.abstracts.findMany({ where: { music_id: musicId } })
         if (list.length === 0) {
-            return await this.getLocalImage(localCoverPath)
+            return await this.getMaiNormalCover(musicId)
         }
         const randomIndex = Math.floor(Math.random() * list.length)
         const picked = list[randomIndex]
         if (!picked?.file_key) {
-            return await this.getLocalImage(localCoverPath)
+            return await this.getMaiNormalCover(musicId)
         }
         return await this.getRemoteImage(picked.file_key)
     }

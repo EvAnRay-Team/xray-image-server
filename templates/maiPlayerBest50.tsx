@@ -3,7 +3,7 @@ import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
 import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme, mapPlayBonusStatus } from "../core/mai-logic"
 
-// ==================== 数据验证模型定义 ====================
+// #region 数据验证模型 (Data Validation Models)
 
 // 单曲记录
 export const ScoreRecordSchema = z.object({
@@ -58,7 +58,9 @@ export const MaiPlayerBest50Schema = z.object({
 export type ScoreRecord = z.infer<typeof ScoreRecordSchema>
 export type MaiPlayerBest50Output = z.infer<typeof MaiPlayerBest50Schema>
 
-// ==================== 静态常量定义区域 ====================
+// #endregion
+
+// #region 静态常量 (Static Constants)
 
 // 难度名称映射
 const DIFFICULTY_NAME = ["basic", "advanced", "expert", "master", "remaster"]
@@ -88,7 +90,11 @@ const NP_H = Math.round(NP_H_ORIG * NP_SCALE) // 201
 
 const s = (v: number) => Math.round(v * NP_SCALE) // 坐标/尺寸等比换算助手
 
-// ==================== 纯函数视图节点层 ====================
+// #endregion
+
+// #region 纯函数视图节点 (View Nodes)
+
+// #region RenderCard (单曲成绩卡片)
 
 // 渲染 Best35 / Best15 的单曲成绩槽位
 function RenderCard({
@@ -225,6 +231,10 @@ function RenderCard({
     )
 }
 
+// #endregion
+
+// #region RenderRecommend (推荐定数区)
+
 // 推荐定数框挂件封装聚合
 function RenderRecommend({
     recommendImg,
@@ -299,6 +309,10 @@ function RenderRecommend({
         </div>
     )
 }
+
+// #endregion
+
+// #region RenderChara (旅行伙伴区)
 
 // 旅行伙伴挂件封装聚合
 function RenderChara({
@@ -422,6 +436,10 @@ function RenderChara({
     )
 }
 
+// #endregion
+
+// #region RenderNameplate (姓名名牌区)
+
 // 顶部姓名信息挂件封装聚合
 function RenderNameplate({
     user_info,
@@ -524,7 +542,11 @@ function RenderNameplate({
     )
 }
 
-// ==================== 渲染工作流执行域 ====================
+// #endregion
+
+// #endregion
+
+// #region 渲染工作流 (Render Workflow)
 
 export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     // 单曲卡片内字体
@@ -544,9 +566,10 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
         const { user_info, custom_config, best_35, best_15, is_abstract } = input
         // 预加载背景（从全局主题映射中解析文件名）
         const bgFileName = BACKGROUND_THEME_MAP[custom_config.theme_config.background] ?? "splash"
-        const background = await AssetsManager.getLocalImage(`maimaidx/player_best50/background/${bgFileName}.png`)
+        const background = await AssetsManager.getAssetImage(`layout/mai_player_best50/background/${bgFileName}.png`)
         
-        // ==================== 姓名框资源加载 ====================
+        // #region 姓名框资源加载 (Nameplate Assets)
+
         const ratName   = RAT_THRESHOLDS.find((t: {min: number}) => user_info.rating >= t.min)?.name ?? "rat_000"
         const titleName = TITLE_THRESHOLDS.find((t: {min: number}) => user_info.rating >= t.min)?.name ?? "10000"
 
@@ -561,25 +584,29 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             nameplateIconImg,
             nameplateFrameImg,
         ] = await Promise.all([
-            AssetsManager.getLocalImage("maimaidx/player_best50/nameplate/name.png"),
-            AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/rat/${ratName}.png`),
-            AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/title/${titleName}.png`).catch(() => null),
+            AssetsManager.getAssetImage("layout/mai_player_best50/nameplate/name.png"),
+            AssetsManager.getAssetImage(`layout/mai_player_best50/nameplate/rat/${ratName}.png`),
+            AssetsManager.getAssetImage(`layout/mai_player_best50/nameplate/title/${titleName}.png`).catch(() => null),
             custom_config.name_plate.dan != null
-                ? AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/${getDanFileStem(custom_config.name_plate.dan!)}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`layout/mai_player_best50/nameplate/${getDanFileStem(custom_config.name_plate.dan!)}.png`).catch(() => null)
                 : Promise.resolve(null),
             custom_config.name_plate.class != null
-                ? AssetsManager.getLocalImage(`maimaidx/player_best50/nameplate/class/class_${String(custom_config.name_plate.class).padStart(2, "0")}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`layout/mai_player_best50/nameplate/class/class_${String(custom_config.name_plate.class).padStart(2, "0")}.png`).catch(() => null)
                 : Promise.resolve(null),
             custom_config.name_plate.plate != null
-                ? AssetsManager.getLocalImage(`maimaidx/collection/plate/plate_${custom_config.name_plate.plate}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`collection/mai_plate/plate_${custom_config.name_plate.plate}.png`).catch(() => null)
                 : Promise.resolve(null),
             custom_config.name_plate.icon != null
-                ? AssetsManager.getLocalImage(`maimaidx/collection/icon/icon_${custom_config.name_plate.icon}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`collection/mai_icon/icon_${custom_config.name_plate.icon}.png`).catch(() => null)
                 : Promise.resolve(null),
             custom_config.frame != null
-                ? AssetsManager.getLocalImage(`maimaidx/collection/frame/frame_${custom_config.frame}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`collection/mai_frame/frame_${custom_config.frame}.png`).catch(() => null)
                 : Promise.resolve(null),
         ]) as [string, string, string | null, string | null, string | null, string | null, string | null, string | null]
+
+        // #endregion
+
+        // #region 推荐定数计算与加载 (Recommend Computing & Assets)
 
         // 预加载推荐定数框资源
         const recTheme = custom_config.recommend_module?.item 
@@ -587,8 +614,8 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             : (RANK_THEME_MAP[custom_config.theme_config.rank] ?? "defaut")
         const [recommendImg, recommendPlaceholderImg] = custom_config.recommend_module?.is_enabled
             ? await Promise.all([
-                AssetsManager.getLocalImage(`maimaidx/player_best50/recommend/${recTheme}_rec.png`).catch(() => null),
-                AssetsManager.getLocalImage(`maimaidx/player_best50/recommend/${recTheme}_rec_placeholder.png`).catch(() => null)
+                AssetsManager.getAssetImage(`layout/mai_player_best50/recommend/${recTheme}_rec.png`).catch(() => null),
+                AssetsManager.getAssetImage(`layout/mai_player_best50/recommend/${recTheme}_rec_placeholder.png`).catch(() => null)
             ])
             : [null, null]
 
@@ -613,26 +640,33 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             min: getRecommendData(b15Min)
         } : null
 
-        // ==================== 旅行伙伴资源加载 ====================
+        // #endregion
+
+        // #region 旅行伙伴资源与计算 (Chara Computing & Assets)
+
         const charaItems = custom_config.chara_module?.is_enabled ? custom_config.chara_module.item : []
         const charaImgs = await Promise.all(
-            charaItems.map(item => AssetsManager.getLocalImage(`maimaidx/player_best50/chara/UI_Chara_${String(item.id).padStart(6, "0")}.png`).catch(() => null))
+            charaItems.map(item => AssetsManager.getAssetImage(`layout/mai_player_best50/chara/UI_Chara_${String(item.id).padStart(6, "0")}.png`).catch(() => null))
         )
 
         // 伙伴边框资源
         const [leftMask, rightMask] = await Promise.all([
-            AssetsManager.getLocalImage("maimaidx/player_best50/chara_border/left_chara_mask.png"),
-            AssetsManager.getLocalImage("maimaidx/player_best50/chara_border/chara_mask.png")
+            AssetsManager.getAssetImage("layout/mai_player_best50/chara_border/left_chara_mask.png"),
+            AssetsManager.getAssetImage("layout/mai_player_best50/chara_border/chara_mask.png")
         ])
 
         const charaThemes = charaItems.map(item => getCharaTheme(item.level))
         const [leftFrame, rightBases, rightFrames] = await Promise.all([
             charaThemes[0] != null 
-                ? AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/left_chara_frama_${charaThemes[0]}.png`).catch(() => null)
+                ? AssetsManager.getAssetImage(`layout/mai_player_best50/chara_border/left_chara_frama_${charaThemes[0]}.png`).catch(() => null)
                 : Promise.resolve(null),
-            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/chara_base_${t}.png`).catch(() => null))),
-            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getLocalImage(`maimaidx/player_best50/chara_border/chara_frame_${t}.png`).catch(() => null)))
+            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getAssetImage(`layout/mai_player_best50/chara_border/chara_base_${t}.png`).catch(() => null))),
+            Promise.all(charaThemes.slice(1).map(t => AssetsManager.getAssetImage(`layout/mai_player_best50/chara_border/chara_frame_${t}.png`).catch(() => null)))
         ])
+
+        // #endregion
+
+        // #region 单曲面板图表资源加载 (Card Assets)
 
         // 预先收集所有曲目
         const allRecords = [...best_35, ...best_15]
@@ -650,7 +684,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                     const diffName = DIFFICULTY_NAME[r.difficulty] ?? "basic"
                     return [
                         `${r.id}_${r.difficulty}`,
-                        await AssetsManager.getLocalImage(`maimaidx/player_best50/card/card_bg/card_${diffName}_dark.png`)
+                        await AssetsManager.getAssetImage(`layout/mai_player_best50/card/card_bg/card_${diffName}_dark.png`)
                     ] as const
                 })
             ).then((entries) => new Map(entries))
@@ -662,14 +696,14 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             Promise.all(
                 allRecords.map(async (r) => {
                     const typeKey = r.id >= 10000 ? "dx" : "st"
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/type/type_${typeKey}.png`)
+                    const src = await AssetsManager.getAssetImage(`layout/mai_player_best50/card/type/type_${typeKey}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
             Promise.all(
                 allRecords.map(async (r) => {
                     const rankStr = getRank(r.achievements).toLowerCase().replace("+", "p")
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/rank/rank_${rankTheme}_${rankStr}.png`)
+                    const src = await AssetsManager.getAssetImage(`layout/mai_player_best50/card/rank/rank_${rankTheme}_${rankStr}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
@@ -678,7 +712,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                 allRecords.map(async (r) => {
                     if (!r.combo_status) return [`${r.id}_${r.difficulty}`, null] as const
                     const status = mapPlayBonusStatus(r.combo_status)
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${status}.png`)
+                    const src = await AssetsManager.getAssetImage(`layout/mai_player_best50/card/playbonus/pb_${status}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
@@ -686,7 +720,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                 allRecords.map(async (r) => {
                     if (!r.sync_status) return [`${r.id}_${r.difficulty}`, null] as const
                     const status = mapPlayBonusStatus(r.sync_status)
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/playbonus/pb_${status}.png`)
+                    const src = await AssetsManager.getAssetImage(`layout/mai_player_best50/card/playbonus/pb_${status}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
@@ -695,11 +729,15 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                     const starLevel = r.dx_star ?? 0
                     if (starLevel === 0) return [`${r.id}_${r.difficulty}`, null] as const
                     const clampedStar = Math.min(starLevel, 5)
-                    const src = await AssetsManager.getLocalImage(`maimaidx/player_best50/card/star/star_${clampedStar}.png`)
+                    const src = await AssetsManager.getAssetImage(`layout/mai_player_best50/card/star/star_${clampedStar}.png`)
                     return [`${r.id}_${r.difficulty}`, src] as const
                 })
             ).then((e) => new Map(e)),
         ])
+
+        // #endregion
+
+        // #region 视图聚合器 (View Aggregation)
 
         const b35Total = best_35.reduce((sum, r) => sum + r.rate, 0)
         const b15Total = best_15.reduce((sum, r) => sum + r.rate, 0)
@@ -791,3 +829,7 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
             </div>
         )
     })
+
+    // #endregion
+
+// #endregion

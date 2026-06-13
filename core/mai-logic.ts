@@ -1,4 +1,3 @@
-
 /**
  * Maimai DX 游戏逻辑工具函数
  * 移植自 xray_mai_bot_v2
@@ -6,13 +5,13 @@
 
 import { AssetsManager } from "./asset";
 
-// #region 字典数据定义
-
 interface RatingCoefficient {
     min: number;
     coef: number;
     fixedAchievement?: number;
 }
+
+// #region 核心规则阈值 (Core Rule Thresholds)
 
 // 达成率 -> 评级 映射表
 export const ACHIEVEMENT_RANK_MAP = [
@@ -63,6 +62,21 @@ export const DX_STAR_MAP = [
     { min: 0,   star: 0, type: 'greater' }, // 默认 0
 ] as const;
 
+// 旅行伙伴等级 -> 素材编号映射 (0, 9, 49, 99, 299, 999, 9999)
+export const CHARA_LEVEL_THRESHOLDS = [
+    { min: 9999, theme: 7 },
+    { min:  999, theme: 6 },
+    { min:  299, theme: 5 },
+    { min:   99, theme: 4 },
+    { min:   49, theme: 3 },
+    { min:    9, theme: 2 },
+    { min:    0, theme: 1 },
+] as const;
+
+// #endregion
+
+// #region 视觉主题路由表 (Theme Routing)
+
 // rat 图阈值 -> 文件名 映射表（rating 升序匹配第一个满足 min 的项）
 export const RAT_THRESHOLDS = [
     { min: 15000, name: "rat_150" },
@@ -78,19 +92,6 @@ export const RAT_THRESHOLDS = [
     { min:  2000, name: "rat_020" },
     { min:     0, name: "rat_000" },
 ] as const;
-
-// dan 字段值 -> 文件名前缀映射
-// dan 0-23  对应 nameplate/dan/dan_XX.png
-// dan 24-48 对应 nameplate/dan/fbr_XX.png（值 - 24，1-based，即 24->fbr_01）
-// 传入 custom_config.dan，返回完整相对路径（不含扩展名）
-export function getDanFileStem(dan: number): string {
-    if (dan <= 23) {
-        return `dan/dan_${String(dan).padStart(2, "0")}`;
-    }
-    // fbr 序号从 1 开始，dan=24 -> fbr_01
-    const fbrIndex = dan - 23;
-    return `dan/fbr_${String(fbrIndex).padStart(2, "0")}`;
-}
 
 // title 称号框阈值 -> 文件名 映射表
 export const TITLE_THRESHOLDS = [
@@ -164,27 +165,9 @@ export const MUSIC_INFO_PANEL_THEME_MAP: Record<string, string> = {
     "universe":  "uni",
 };
 
-// 旅行伙伴等级 -> 素材编号映射 (0, 9, 49, 99, 299, 999, 9999)
-export const CHARA_LEVEL_THRESHOLDS = [
-    { min: 9999, theme: 7 },
-    { min:  999, theme: 6 },
-    { min:  299, theme: 5 },
-    { min:   99, theme: 4 },
-    { min:   49, theme: 3 },
-    { min:    9, theme: 2 },
-    { min:    0, theme: 1 },
-] as const;
-
 // #endregion
 
-/**
- * 映射 play bonus (combo/sync) 状态字符串
- * 将 fsd/fsdp 全量映射为 fdx/fdxp
- */
-export function mapPlayBonusStatus(status: string | null | undefined): string {
-    if (!status) return "";
-    return status.replace(/fsdp/g, "fdxp").replace(/fsd/g, "fdx");
-}
+// #region 数学推演引擎 (Math Engine)
 
 /**
  * 达成率 (Achievement) 转 评级 (Rank)
@@ -268,6 +251,46 @@ export function getRecommendData(ra: number) {
     };
 }
 
+// #endregion
+
+// #region UI属性装配与清洗 (UI Props Assembly)
+
+/**
+ * 根据伙伴等级获取对应的素材主题编号 (1-7)
+ */
+export function getCharaTheme(level: number): number {
+    for (const item of CHARA_LEVEL_THRESHOLDS) {
+        if (level >= item.min) return item.theme;
+    }
+    return 1;
+}
+
+/**
+ * 映射 play bonus (combo/sync) 状态字符串
+ * 将 fsd/fsdp 全量映射为 fdx/fdxp
+ */
+export function mapPlayBonusStatus(status: string | null | undefined): string {
+    if (!status) return "";
+    return status.replace(/fsdp/g, "fdxp").replace(/fsd/g, "fdx");
+}
+
+// dan 字段值 -> 文件名前缀映射
+// dan 0-23  对应 nameplate/dan/dan_XX.png
+// dan 24-48 对应 nameplate/dan/fbr_XX.png（值 - 24，1-based，即 24->fbr_01）
+// 传入 custom_config.dan，返回完整相对路径（不含扩展名）
+export function getDanFileStem(dan: number): string {
+    if (dan <= 23) {
+        return `dan/dan_${String(dan).padStart(2, "0")}`;
+    }
+    // fbr 序号从 1 开始，dan=24 -> fbr_01
+    const fbrIndex = dan - 23;
+    return `dan/fbr_${String(fbrIndex).padStart(2, "0")}`;
+}
+
+// #endregion
+
+// #region 异步资源结构探测 (Async I/O Probe)
+
 /**
  * 封面 id 解析：4位id前补1；5位id若封面不存在则回退到去掉首位后的id
  */
@@ -280,26 +303,16 @@ export async function resolveCoverId(id: number): Promise<{ coverId: number; cov
     // 5位数 id → 先尝试原始 id，找不到则降为去掉首位的 id
     if (coverId >= 10000 && coverId <= 99999) {
         try {
-            const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${coverId}.png`);
+            const src = await AssetsManager.getMaiNormalCover(coverId);
             return { coverId, coverSrc: src };
         } catch {
-            // 封面不存在，去掉首位数字（例如 10333 → 333）
             const fallbackId = coverId % 10000;
-            const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${fallbackId}.png`);
+            const src = await AssetsManager.getMaiNormalCover(fallbackId);
             return { coverId: fallbackId, coverSrc: src };
         }
     }
-    // 其他情况直接加载
-    const src = await AssetsManager.getLocalImage(`maimaidx/normal_cover/${coverId}.png`);
+    const src = await AssetsManager.getMaiNormalCover(coverId);
     return { coverId, coverSrc: src };
 }
 
-/**
- * 根据伙伴等级获取对应的素材主题编号 (1-7)
- */
-export function getCharaTheme(level: number): number {
-    for (const item of CHARA_LEVEL_THRESHOLDS) {
-        if (level >= item.min) return item.theme;
-    }
-    return 1;
-}
+// #endregion
