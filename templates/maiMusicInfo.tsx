@@ -162,6 +162,17 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         }
         const textColor = getTextColor()
 
+        // 11885 False Amber：标题在首个 " (" 处拆分为主标题与副标题
+        let titleMain: string | null = null
+        let titleSub: string | null = null
+        if (musicId === 11885) {
+            const idx = basic_info.title.indexOf(" (")
+            if (idx > 0) {
+                titleMain = basic_info.title.slice(0, idx)
+                titleSub = basic_info.title.slice(idx + 1)
+            }
+        }
+
 
         return (
             <div
@@ -191,21 +202,44 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
                 }}>{basic_info.artist}</span>
 
                 {/* 标题 */}
-                <span style={{
-                    fontFamily: "TitleFont, FallbackFont",
-                    fontSize: 55.1,
-                    color: "white",
-                    lineHeight: 1.3,
-                    whiteSpace: "normal",
-                    wordWrap: "break-word",
-                    overflowWrap: "break-word",
-                    width: "800px",
-                    textAlign: "left",
-                    ...absoluteStyle(733, 253), // Python left aligned at 727
-                    transform: "translateY(12px)" // Fine tuning for baseline
-                }}>
-                    {basic_info.title}
-                </span>
+                {titleMain && titleSub ? (
+                    <div style={{
+                        fontFamily: "TitleFont, FallbackFont",
+                        color: "white",
+                        width: "800px",
+                        textAlign: "left",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        ...absoluteStyle(733, 253),
+                        transform: "translateY(12px)"
+                    }}>
+                        <span style={{ fontSize: 55.1, lineHeight: 1.2, whiteSpace: "nowrap" }}>{titleMain}</span>
+                        <span style={{
+                            fontSize: 30,
+                            lineHeight: 1.25,
+                            whiteSpace: "normal",
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word",
+                        }}>{titleSub}</span>
+                    </div>
+                ) : (
+                    <span style={{
+                        fontFamily: "TitleFont, FallbackFont",
+                        fontSize: 55.1,
+                        color: "white",
+                        lineHeight: 1.3,
+                        whiteSpace: "normal",
+                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+                        width: "800px",
+                        textAlign: "left",
+                        ...absoluteStyle(733, 253), // Python left aligned at 727
+                        transform: "translateY(12px)" // Fine tuning for baseline
+                    }}>
+                        {basic_info.title}
+                    </span>
+                )}
 
                 {/* 元数据：ID */}
                 <span style={{ 
