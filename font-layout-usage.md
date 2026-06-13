@@ -9,7 +9,7 @@
         - 歌曲曲师字体 ["TitleFont"] : "FOT-NewRodinProN-UB.otf"
         - 歌曲ID/BPM/分类 ["MetaFont"] : "江城圆体 700W.ttf"
 
-    - **单曲成绩["maiPlayerMusicScore"]**
+    - **单曲成绩["maiPlayerMusicRecord"]**
         - 达成率/单曲Rat/DX分数字体 ["ScoretFont"] : "FOT-NewRodinProN-UB.otf"
 
     - **单曲信息["maiMusicInfo"]**

@@ -68,19 +68,19 @@ export const maiPlayerMusicRecordTemplate = createRenderTemplate("maiPlayerMusic
         // 1. 准备背景
         const musicId = Number(basic_info.id)
         const theme = theme_config.background
-        const bgFileName = MUSIC_INFO_BG_THEME_MAP[theme] ?? "bg_circle"
+        const bgFileName = MUSIC_INFO_BG_THEME_MAP[theme] ?? "bg-circle"
 
         const bgPath = SPECIAL_MUSIC_BG_MAP[musicId]
-            ? `layout/mai_music_record/background_special/${SPECIAL_MUSIC_BG_MAP[musicId]}`
-            : `layout/mai_music_record/background/${bgFileName}.png`
+            ? `layout/mai-music-record/background-special/${SPECIAL_MUSIC_BG_MAP[musicId]}`
+            : `layout/mai-music-record/background/${bgFileName}.png`
 
         // 2. 预加载基础资源
         const [bgImg, coverImg, typeIconImg, mask1Img, mask2Img] = await Promise.all([
             AssetsManager.getAssetImage(bgPath),
             AssetsManager.getMusicCover(musicId, is_abstract),
-            AssetsManager.getAssetImage(`layout/mai_music_record/type/${basic_info.type}.png`),
-            AssetsManager.getAssetImage(`layout/mai_music_record/mask/mask_1.png`),
-            AssetsManager.getAssetImage(`layout/mai_music_record/mask/mask_2.png`)
+            AssetsManager.getAssetImage(`layout/mai-music-record/type/${basic_info.type}.png`),
+            AssetsManager.getAssetImage(`layout/mai-music-record/mask/mask-1.png`),
+            AssetsManager.getAssetImage(`layout/mai-music-record/mask/mask-2.png`)
         ])
 
         // 3. 准备版本图标
@@ -118,13 +118,13 @@ export const maiPlayerMusicRecordTemplate = createRenderTemplate("maiPlayerMusic
 
             // 加载图标
             // Rank: 必需
-            const rankImgPromise = AssetsManager.getAssetImage(`layout/mai_music_record/rank/${rankImgName}.png`)
+            const rankImgPromise = AssetsManager.getAssetImage(`layout/mai-music-record/rank/${rankImgName}.png`)
             
             // FC: 可选
             let fcImgPromise = Promise.resolve(null) as Promise<string | null>
             if (record.combo_status) {
                 const fcName = formatMaiResourceName(record.combo_status)
-                fcImgPromise = AssetsManager.getAssetImage(`layout/mai_music_record/playbonus/${fcName}.png`)
+                fcImgPromise = AssetsManager.getAssetImage(`layout/mai-music-record/playbonus/${fcName}.png`)
             }
 
             // FS: 可选 (排除 SYNC 文字)
@@ -133,13 +133,13 @@ export const maiPlayerMusicRecordTemplate = createRenderTemplate("maiPlayerMusic
                  const syncUpper = record.sync_status.toUpperCase()
                  if (syncUpper !== 'SYNC') {
                      const fsName = formatMaiResourceName(record.sync_status)
-                     fsImgPromise = AssetsManager.getAssetImage(`layout/mai_music_record/playbonus/${fsName}.png`)
+                     fsImgPromise = AssetsManager.getAssetImage(`layout/mai-music-record/playbonus/${fsName}.png`)
                  }
             }
 
             // Star: 可选
             const starImgPromise = dxStar > 0 
-                ? AssetsManager.getAssetImage(`layout/mai_music_record/star/Star_${dxStar}.png`)
+                ? AssetsManager.getAssetImage(`layout/mai-music-record/star/Star-${dxStar}.png`)
                 : Promise.resolve(null)
 
             const [rankImg, fcImg, fsImg, starImg] = await Promise.all([

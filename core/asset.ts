@@ -103,7 +103,7 @@ export class AssetsManager {
 
     /**
      * 读取 assets 下的图片并转为 base64 data URL
-     * @param relativePath 相对 assets/ 的路径，如 layout/mai_music_info/background/bg_dx.png
+     * @param relativePath 相对 assets/ 的路径，如 layout/mai-music-info/background/bg-dx.png
      */
     public static async getAssetImage(relativePath: string): Promise<string> {
         const file = Bun.file(join(process.cwd(), "assets", relativePath))

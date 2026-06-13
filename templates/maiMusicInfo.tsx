@@ -68,18 +68,18 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         const specialBgName = SPECIAL_MUSIC_BG_MAP[musicId]
         const isSpecialBg = !!specialBgName
 
-        const bgPrefix = MUSIC_INFO_BG_THEME_MAP[theme] ?? "bg_splash"
+        const bgPrefix = MUSIC_INFO_BG_THEME_MAP[theme] ?? "bg-splash"
         const panelPrefix = MUSIC_INFO_PANEL_THEME_MAP[theme] ?? "splash"
 
         const bgPath = isSpecialBg
-            ? `layout/mai_music_info/special_bg/${specialBgName}`
-            : `layout/mai_music_info/background/${bgPrefix}.png`;
+            ? `layout/mai-music-info/special-bg/${specialBgName}`
+            : `layout/mai-music-info/background/${bgPrefix}.png`;
 
         // 2. 预加载基础资源
         const [bgImg, coverImg, typeIconImg] = await Promise.all([
             AssetsManager.getAssetImage(bgPath),
             AssetsManager.getMusicCover(musicId, is_abstract),
-            AssetsManager.getAssetImage(`layout/mai_music_info/type/${basic_info.type}.png`),
+            AssetsManager.getAssetImage(`layout/mai-music-info/type/${basic_info.type}.png`),
         ])
 
         // 3. 准备版本图标
@@ -105,8 +105,8 @@ export const maiMusicInfoTemplate = createRenderTemplate("maiMusicInfo")
         if (!isSpecialBg) {             
              const suffix = hasRemaster ? "2" : "1"
              const [iBg, cBg] = await Promise.all([
-                 AssetsManager.getAssetImage(`layout/mai_music_info/information/im_${panelPrefix}_${suffix}.png`),
-                 AssetsManager.getAssetImage(`layout/mai_music_info/creator/cr_${panelPrefix}_${suffix}.png`)
+                 AssetsManager.getAssetImage(`layout/mai-music-info/information/im-${panelPrefix}-${suffix}.png`),
+                 AssetsManager.getAssetImage(`layout/mai-music-info/creator/cr-${panelPrefix}-${suffix}.png`)
              ])
              infoBgImg = iBg
              creatorBgImg = cBg

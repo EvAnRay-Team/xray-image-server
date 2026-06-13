@@ -79,18 +79,18 @@ export const CHARA_LEVEL_THRESHOLDS = [
 
 // rat 图阈值 -> 文件名 映射表（rating 升序匹配第一个满足 min 的项）
 export const RAT_THRESHOLDS = [
-    { min: 15000, name: "rat_150" },
-    { min: 14500, name: "rat_145" },
-    { min: 14000, name: "rat_140" },
-    { min: 13000, name: "rat_130" },
-    { min: 12000, name: "rat_120" },
-    { min: 10000, name: "rat_100" },
-    { min:  8000, name: "rat_080" },
-    { min:  6000, name: "rat_060" },
-    { min:  4000, name: "rat_040" },
-    { min:  3000, name: "rat_030" },
-    { min:  2000, name: "rat_020" },
-    { min:     0, name: "rat_000" },
+    { min: 15000, name: "rat-150" },
+    { min: 14500, name: "rat-145" },
+    { min: 14000, name: "rat-140" },
+    { min: 13000, name: "rat-130" },
+    { min: 12000, name: "rat-120" },
+    { min: 10000, name: "rat-100" },
+    { min:  8000, name: "rat-080" },
+    { min:  6000, name: "rat-060" },
+    { min:  4000, name: "rat-040" },
+    { min:  3000, name: "rat-030" },
+    { min:  2000, name: "rat-020" },
+    { min:     0, name: "rat-000" },
 ] as const;
 
 // title 称号框阈值 -> 文件名 映射表
@@ -133,24 +133,24 @@ export const RANK_THEME_MAP: Record<string, string> = {
     "universe":  "universe",
 };
 
-// music_info 背景文件名映射（key = 全局主题；对应 music_info/background/bg_*.png）
+// music_info 背景文件名映射（key = 全局主题；对应 music-info/background/bg-*.png）
 export const MUSIC_INFO_BG_THEME_MAP: Record<string, string> = {
-    "buddies":   "bg_bud",
-    "buddiesp":  "bg_budp",
-    "circle":    "bg_circle",
-    "dx":        "bg_dx",
-    "festival":  "bg_fes",
-    "festivalp": "bg_fesp",
-    "prism":     "bg_prism",
-    "prismp":    "bg_prismp",
-    "splash":    "bg_splash",
-    "splashp":   "bg_splashp",
-    "universe":  "bg_uni",
+    "buddies":   "bg-bud",
+    "buddiesp":  "bg-budp",
+    "circle":    "bg-circle",
+    "dx":        "bg-dx",
+    "festival":  "bg-fes",
+    "festivalp": "bg-fesp",
+    "prism":     "bg-prism",
+    "prismp":    "bg-prismp",
+    "splash":    "bg-splash",
+    "splashp":   "bg-splashp",
+    "universe":  "bg-uni",
 };
 
 // music_info information/creator 面板主题前缀（key = 全局主题；plus 版共用同一套面板图）
-// 对应 music_info/information/im_{prefix}_{1|2}.png
-//         music_info/creator/cr_{prefix}_{1|2}.png
+// 对应 music-info/information/im-{prefix}-{1|2}.png
+//         music-info/creator/cr-{prefix}-{1|2}.png
 export const MUSIC_INFO_PANEL_THEME_MAP: Record<string, string> = {
     "buddies":   "bud",
     "buddiesp":  "bud",
@@ -275,16 +275,16 @@ export function mapPlayBonusStatus(status: string | null | undefined): string {
 }
 
 // dan 字段值 -> 文件名前缀映射
-// dan 0-23  对应 nameplate/dan/dan_XX.png
-// dan 24-48 对应 nameplate/dan/fbr_XX.png（值 - 24，1-based，即 24->fbr_01）
+// dan 0-23  对应 nameplate/dan/dan-XX.png
+// dan 24-48 对应 nameplate/dan/fbr-XX.png（值 - 24，1-based，即 24->fbr-01）
 // 传入 custom_config.dan，返回完整相对路径（不含扩展名）
 export function getDanFileStem(dan: number): string {
     if (dan <= 23) {
-        return `dan/dan_${String(dan).padStart(2, "0")}`;
+        return `dan/dan-${String(dan).padStart(2, "0")}`;
     }
-    // fbr 序号从 1 开始，dan=24 -> fbr_01
+    // fbr 序号从 1 开始，dan=24 -> fbr-01
     const fbrIndex = dan - 23;
-    return `dan/fbr_${String(fbrIndex).padStart(2, "0")}`;
+    return `dan/fbr-${String(fbrIndex).padStart(2, "0")}`;
 }
 
 // #endregion
