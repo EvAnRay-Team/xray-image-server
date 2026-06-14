@@ -1,7 +1,7 @@
 import z from "zod"
 import { createRenderTemplate } from "../core/render-template"
 import { AssetsManager } from "../core/asset"
-import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme, mapPlayBonusStatus } from "../core/mai-logic"
+import { getRank, RAT_THRESHOLDS, TITLE_THRESHOLDS, getDanFileStem, BACKGROUND_THEME_MAP, CREDITS_SOURCE_MAP, RANK_THEME_MAP, resolveCoverId, getRecommendData, getCharaTheme, mapPlayBonusStatus } from "../core/mai-logic"
 
 // #region 数据验证模型 (Data Validation Models)
 
@@ -52,6 +52,9 @@ export const MaiPlayerBest50Schema = z.object({
     }),
     best_35: z.array(ScoreRecordSchema),
     best_15: z.array(ScoreRecordSchema),
+    credits: z.object({
+        source: z.enum(["diving_fish", "lxns"]).default("diving_fish"),
+    }).default({ source: "diving_fish" }),
     is_abstract: z.boolean().default(false)
 })
 
@@ -563,10 +566,14 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
     })
     .setInput(MaiPlayerBest50Schema)
     .setElement(async (input) => {
-        const { user_info, custom_config, best_35, best_15, is_abstract } = input
+        const { user_info, custom_config, best_35, best_15, credits, is_abstract } = input
         // 预加载背景（从全局主题映射中解析文件名）
         const bgFileName = BACKGROUND_THEME_MAP[custom_config.theme_config.background] ?? "splash"
-        const background = await AssetsManager.getAssetImage(`layout/mai-player-best50/background/${bgFileName}.png`)
+        const creditsSuffix = CREDITS_SOURCE_MAP[credits.source] ?? "df"
+        const [background, creditsImg] = await Promise.all([
+            AssetsManager.getAssetImage(`layout/mai-player-best50/background/${bgFileName}.png`),
+            AssetsManager.getAssetImage(`layout/mai-player-best50/credits/${bgFileName}-${creditsSuffix}.png`).catch(() => null),
+        ])
         
         // #region 姓名框资源加载 (Nameplate Assets)
 
@@ -826,6 +833,11 @@ export const maiPlayerBest50Template = createRenderTemplate("maiPlayerBest50")
                         rightFrames
                     }}
                 />
+
+                {creditsImg && (
+                    <img src={creditsImg} alt="credits"
+                        style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none", zIndex: 100 }} />
+                )}
             </div>
         )
     })

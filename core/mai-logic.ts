@@ -117,6 +117,12 @@ export const BACKGROUND_THEME_MAP: Record<string, string> = {
     "universe":  "universe",
 };
 
+// player_best50 credits 数据来源 → 文件名后缀（key = credits.source）
+export const CREDITS_SOURCE_MAP: Record<string, string> = {
+    "diving_fish": "df",
+    "lxns":        "lxns",
+};
+
 // player_best50 rank 图标主题前缀映射（key = theme_config.rank；plus 版共用同一套 rank 图）
 export const RANK_THEME_MAP: Record<string, string> = {
     "defaut":    "defaut",
